@@ -1,0 +1,8 @@
+# Exclusión de archivos para la imagen de Docker del frontend
+node_modules
+.next
+out
+build
+.git
+.agents
+Dockerfile
