@@ -1599,7 +1599,7 @@ export default function Home() {
                     <tbody>
                       {notificationLogs.map((log, idx) => (
                         <tr key={idx}>
-                          <td style={{ color: "var(--text-secondary)" }}>{new Date(log.timestamp * 1000).toLocaleString()}</td>
+                          <td style={{ color: "var(--text-secondary)" }} suppressHydrationWarning>{new Date(log.timestamp * 1000).toLocaleString()}</td>
                           <td><span className="badge" style={{ background: "rgba(197, 168, 128, 0.1)", color: "var(--gold-primary)", border: "1px solid rgba(197,168,128,0.15)" }}>{log.title}</span></td>
                           <td>{log.message}</td>
                         </tr>
