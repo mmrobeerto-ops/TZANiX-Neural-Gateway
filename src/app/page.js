@@ -659,7 +659,7 @@ export default function Home() {
     let reportContent = "=================================================================\n";
     reportContent += "                 TZANIX DATA SOLUTIONS - AUDIT REPORT            \n";
     reportContent += "=================================================================\n";
-    reportContent += `Fecha del Reporte           : ${new Date().toLocaleString()}\n`;
+    reportContent += `Fecha del Reporte           : ${new Date().toLocaleString('en-US')}\n`;
     reportContent += `Cliente de Borde            : ${client}\n`;
     reportContent += `ID de Cliente               : ${selectedClient}\n`;
     reportContent += "-----------------------------------------------------------------\n";
@@ -670,9 +670,9 @@ export default function Home() {
     reportContent += `Porcentaje de Ruido Filtrado: ${efficiencyGain}%\n`;
     reportContent += "-----------------------------------------------------------------\n";
     reportContent += "DESGLOSE DE VOLUMEN Y COSTOS:\n";
-    reportContent += `Puntos Totales Recibidos    : ${visiblePoints.toLocaleString()} ticks\n`;
-    reportContent += `Ruido Basura Eliminado Local: ${noiseTicksEliminated.toLocaleString()} ticks (¡Evito subir a la Nube!)\n`;
-    reportContent += `Puntos Limpios Enviados     : ${(visiblePoints - noiseTicksEliminated).toLocaleString()} ticks\n`;
+    reportContent += `Puntos Totales Recibidos    : ${visiblePoints.toLocaleString('en-US')} ticks\n`;
+    reportContent += `Ruido Basura Eliminado Local: ${noiseTicksEliminated.toLocaleString('en-US')} ticks (¡Evito subir a la Nube!)\n`;
+    reportContent += `Puntos Limpios Enviados     : ${(visiblePoints - noiseTicksEliminated).toLocaleString('en-US')} ticks\n`;
     reportContent += `Costo de Procesamiento API  : $${billingMetrics.cost_usd?.toFixed(2)} USD\n`;
     reportContent += `Ahorro ROI Computacion Cloud: $${visibleRoi.toFixed(2)} USD\n`;
     reportContent += `Ahorro Neto Promedio (85%)  : $${(visibleRoi * 0.85).toFixed(2)} USD\n`;
@@ -687,7 +687,7 @@ export default function Home() {
     reportContent += "=================================================================\n";
     reportContent += "JUSTIFICACION TECNICA DEL FILTRADO Y DESCARTE DE RUIDO:\n";
     reportContent += "1. DETECCION Y AISLAMIENTO:\n";
-    reportContent += `   Se aislaron y descartaron ${noiseTicksEliminated.toLocaleString()} ticks que corresponden a ruido\n`;
+    reportContent += `   Se aislaron y descartaron ${noiseTicksEliminated.toLocaleString('en-US')} ticks que corresponden a ruido\n`;
     reportContent += `   de alta frecuencia (armonicos no lineales y fluctuaciones parasitarias)\n`;
     reportContent += `   de la señal. Estos valores representan distorsion e interferencia fisica.\n`;
     reportContent += "2. RAZON DEL DESCARTE:\n";
@@ -857,7 +857,7 @@ export default function Home() {
               <span>SINTONIZANDO FLUJO EN VIVO: <strong>{liveBtcData.data_stream_id}</strong></span>
             </div>
             <div style={{ display: "flex", gap: "15px" }}>
-              <span>Inferencia: <strong style={{ color: "#fff" }}>{Math.round(currentBtcPrice || 65000).toLocaleString()} TFLOPS</strong></span>
+              <span>Inferencia: <strong style={{ color: "#fff" }}>{Math.round(currentBtcPrice || 65000).toLocaleString('en-US')} TFLOPS</strong></span>
               <span>Eficiencia: <strong style={{ color: "var(--gold-primary)" }}>{currentBtcGain || 43.10}%</strong></span>
             </div>
           </div>
@@ -1052,7 +1052,7 @@ export default function Home() {
                       Volumen Optimizado (Ticks)
                     </span>
                     <strong className="monospace-font" style={{ fontSize: "1.5rem", color: "#FFFFFF", display: "block", marginTop: "4px" }}>
-                      {animatedPoints.toLocaleString()}
+                      {animatedPoints.toLocaleString('en-US')}
                     </strong>
                     <span style={{ fontSize: "0.65rem", color: "var(--text-secondary)", marginTop: "2px", display: "block" }}>Operacional total</span>
                   </div>
@@ -1106,7 +1106,7 @@ export default function Home() {
                       Ahorro ROI Acumulado
                     </span>
                     <strong className="monospace-font" style={{ fontSize: "1.5rem", color: "var(--gold-primary)", display: "block", marginTop: "4px" }}>
-                      ${animatedRoi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ${animatedRoi.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </strong>
                     <span style={{ fontSize: "0.65rem", color: "var(--text-secondary)", marginTop: "2px", display: "block" }}>Inferencia optimizada</span>
                   </div>
@@ -1122,7 +1122,7 @@ export default function Home() {
                       Ahorro Neto Promedio
                     </span>
                     <strong className="monospace-font" style={{ fontSize: "1.5rem", color: "var(--gold-primary)", display: "block", marginTop: "4px" }}>
-                      ${(animatedRoi * 0.85).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      ${(animatedRoi * 0.85).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </strong>
                     <span style={{ fontSize: "0.65rem", color: "var(--text-secondary)", marginTop: "2px", display: "block" }}>Factor de eficiencia</span>
                   </div>
@@ -1342,7 +1342,7 @@ export default function Home() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px", marginBottom: "15px" }}>
                 <div>
                   <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Volumen Procesado</span>
-                  <div style={{ fontSize: "1.8rem", fontWeight: "700", marginTop: "4px" }}>{billingMetrics.total_points?.toLocaleString() || 0} Ticks</div>
+                  <div style={{ fontSize: "1.8rem", fontWeight: "700", marginTop: "4px" }}>{billingMetrics.total_points?.toLocaleString('en-US') || 0} Ticks</div>
                 </div>
                 <div>
                   <span style={{ color: "var(--text-secondary)", fontSize: "0.85rem" }}>Costo del Periodo (Stripe)</span>
@@ -1599,7 +1599,7 @@ export default function Home() {
                     <tbody>
                       {notificationLogs.map((log, idx) => (
                         <tr key={idx}>
-                          <td style={{ color: "var(--text-secondary)" }} suppressHydrationWarning>{new Date(log.timestamp * 1000).toLocaleString()}</td>
+                          <td style={{ color: "var(--text-secondary)" }} suppressHydrationWarning>{new Date(log.timestamp * 1000).toLocaleString('en-US')}</td>
                           <td><span className="badge" style={{ background: "rgba(197, 168, 128, 0.1)", color: "var(--gold-primary)", border: "1px solid rgba(197,168,128,0.15)" }}>{log.title}</span></td>
                           <td>{log.message}</td>
                         </tr>
