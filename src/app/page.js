@@ -789,9 +789,9 @@ export default function Home() {
 
         </div>
 
-        {/* Icono Inferior: Bitácora */}
-        <div className="sidebar-item" onClick={() => setCurrentView("dashboard")} title="Bitácora de Auditoría" style={{ opacity: 0.6 }}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+        {/* Icono Inferior: Facturación */}
+        <div className={`sidebar-item ${currentView === "billing" ? "active" : ""}`} onClick={() => setCurrentView("billing")} title="Facturación y Stripe" style={{ opacity: 0.8 }}>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>
         </div>
       </aside>
 
@@ -810,7 +810,7 @@ export default function Home() {
                 <circle cx="80" cy="50" r="10" fill="#00E5FF" />
                 <circle cx="50" cy="50" r="13" fill="#FFFFFF" stroke="#00E5FF" strokeWidth="5" style={{ filter: "drop-shadow(0 0 8px #00E5FF)" }} />
               </svg>
-              <span>TZANiX <span style={{ color: "var(--gold-primary)", fontWeight: "800" }}>AI Foundation</span></span>
+              <span>TZANiX <span style={{ color: "var(--gold-primary)", fontWeight: "800" }}>Neural Gateway</span></span>
             </h1>
             <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>Motor de Purificación de Datasets LLM | FastAPI Core</span>
           </div>
@@ -895,10 +895,11 @@ export default function Home() {
               <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                 <button 
                   className="btn-primary" 
-                  style={{ width: "auto", padding: "10px 24px", fontSize: "0.9rem" }}
-                  onClick={() => setShowKeyPanel(!showKeyPanel)}
+                  style={{ width: "auto", padding: "10px 24px", fontSize: "0.9rem", boxShadow: "0 0 15px rgba(0,229,255,0.3)" }}
+                  onClick={handleSimulateWorkload}
+                  disabled={isSimulating}
                 >
-                  {showKeyPanel ? "Ocultar Credenciales" : "Conectar Flujo de Datos"}
+                  {isSimulating ? "Purificando Flujo..." : "Conectar Flujo de Datos"}
                 </button>
               </div>
             </div>
