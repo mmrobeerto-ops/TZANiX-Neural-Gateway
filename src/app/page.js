@@ -329,7 +329,13 @@ export default function Home() {
     const connectWS = () => {
       // Usar el host dinámico de la ventana para evitar bloqueos por host mismatch
       const wsHost = typeof window !== "undefined" ? window.location.hostname : "127.0.0.1";
-      const ws = new WebSocket(`ws://${wsHost}:8000/ws/live-stream`);
+      let ws;
+      try {
+        ws = new WebSocket(`ws://${wsHost}:8000/ws/live-stream`);
+      } catch (err) {
+        console.warn("Fallo de conexión WebSocket (probablemente bloqueo HTTPS a WS inseguro):", err);
+        return;
+      }
       wsRef.current = ws;
 
       ws.onopen = () => {
