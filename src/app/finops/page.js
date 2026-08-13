@@ -239,7 +239,7 @@ function DataPurificationHologram({ isTesting, results, lang }) {
         ctx.moveTo(pA.px, pA.py);
         ctx.lineTo(pB.px, pB.py);
       }
-      ctx.strokeStyle = \`rgba(0, 229, 255, \${isTesting ? 0.8 : 0.3})\`;
+      ctx.strokeStyle = `rgba(0, 229, 255, ${isTesting ? 0.8 : 0.3})`;
       ctx.lineWidth = isTesting ? 2 : 1;
       ctx.stroke();
 
@@ -248,12 +248,12 @@ function DataPurificationHologram({ isTesting, results, lang }) {
         const p = projectedTVertices[i];
         ctx.beginPath();
         ctx.arc(p.px, p.py, 3 * p.scale, 0, Math.PI*2);
-        ctx.fillStyle = \`rgba(0, 255, 255, \${0.8 * p.scale})\`;
+        ctx.fillStyle = `rgba(0, 255, 255, ${0.8 * p.scale})`;
         ctx.fill();
         // Fake bloom
         ctx.beginPath();
         ctx.arc(p.px, p.py, 10 * p.scale, 0, Math.PI*2);
-        ctx.fillStyle = \`rgba(0, 255, 255, \${0.2 * p.scale})\`;
+        ctx.fillStyle = `rgba(0, 255, 255, ${0.2 * p.scale})`;
         ctx.fill();
       }
       ctx.restore();
@@ -344,12 +344,12 @@ function DataPurificationHologram({ isTesting, results, lang }) {
             const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
             
             if (p1.state === 'noisy' && dist < 45 * p1.scale) {
-              ctx.strokeStyle = \`rgba(255, 0, 85, \${0.3 * (1 - dist/(45*p1.scale)) * depthAlpha})\`;
+              ctx.strokeStyle = `rgba(255, 0, 85, ${0.3 * (1 - dist/(45*p1.scale)) * depthAlpha})`;
               ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
             } else if (p1.state === 'pure' && dist < 80 * p1.scale) {
               // Only connect pure beam if closely aligned
               if (Math.abs(p1.origY - p2.origY) < 2) {
-                ctx.strokeStyle = \`rgba(0, 229, 255, \${0.5 * (1 - dist/(80*p1.scale)) * depthAlpha})\`;
+                ctx.strokeStyle = `rgba(0, 229, 255, ${0.5 * (1 - dist/(80*p1.scale)) * depthAlpha})`;
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
               }
             }
@@ -360,31 +360,31 @@ function DataPurificationHologram({ isTesting, results, lang }) {
         
         if (p1.state === 'noisy') {
           // Aberration
-          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha * 0.6})\`;
+          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.6})`;
           ctx.beginPath(); ctx.arc(p1.x - p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
           
-          ctx.fillStyle = \`rgba(255, 0, 85, \${depthAlpha})\`;
+          ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha})`;
           ctx.beginPath(); ctx.arc(p1.x + p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
           
-          ctx.fillStyle = \`rgba(255, 0, 85, \${depthAlpha * 0.2})\`;
+          ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha * 0.2})`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
         } 
         else if (p1.state === 'quarantine') {
-          ctx.fillStyle = \`rgba(255, 0, 0, \${depthAlpha})\`;
+          ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha})`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = \`rgba(255, 0, 0, \${depthAlpha * 0.3})\`;
+          ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha * 0.3})`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 6, 0, Math.PI*2); ctx.fill();
         } 
         else if (p1.state === 'pure') {
-          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha})\`;
+          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha})`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha * 0.2})\`;
+          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.2})`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
         } 
         else { // Filtering (White Hot)
-          ctx.fillStyle = \`rgba(255, 255, 255, \${depthAlpha})\`;
+          ctx.fillStyle = `rgba(255, 255, 255, ${depthAlpha})`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 2, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha * 0.5})\`;
+          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.5})`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 6, 0, Math.PI*2); ctx.fill();
         }
       }
@@ -396,11 +396,11 @@ function DataPurificationHologram({ isTesting, results, lang }) {
         ctx.save();
         ctx.translate(cx, cy);
         const flashOpacity = isTesting ? Math.abs(Math.sin(time * 10)) * 0.8 + 0.2 : 0.6;
-        ctx.strokeStyle = \`rgba(255, 0, 85, \${flashOpacity})\`;
+        ctx.strokeStyle = `rgba(255, 0, 85, ${flashOpacity})`;
         ctx.beginPath(); ctx.rect(-80, 150, 160, 60); ctx.stroke();
-        ctx.fillStyle = \`rgba(255, 0, 85, \${flashOpacity * 0.1})\`; ctx.fill();
+        ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity * 0.1})`; ctx.fill();
         
-        ctx.fillStyle = \`rgba(255, 0, 85, \${flashOpacity})\`;
+        ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity})`;
         ctx.font = "bold 10px 'Roboto Mono', monospace";
         ctx.textAlign = "center";
         ctx.fillText(t.hologram_quarantine, 0, 185);
@@ -575,7 +575,7 @@ export default function FinOpsDashboard() {
                 {vectorSavings.toFixed(1)}<span style={{ fontSize: '1.5rem', color: '#00E5FF' }}>%</span>
               </div>
               <div style={{ width: '100%', height: '6px', backgroundColor: '#1A1F24', borderRadius: '3px', marginTop: '12px', overflow: 'hidden', border: '1px solid #333' }}>
-                <div style={{ height: '100%', width: \`\${Math.min(vectorSavings, 100)}%\`, background: 'linear-gradient(90deg, #ff0055, #a855f7, #00E5FF)', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 0 10px rgba(0,229,255,0.5)' }}></div>
+                <div style={{ height: '100%', width: `${Math.min(vectorSavings, 100)}%`, background: 'linear-gradient(90deg, #ff0055, #a855f7, #00E5FF)', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 0 10px rgba(0,229,255,0.5)' }}></div>
               </div>
             </div>
             <div style={{ marginBottom: '30px', background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
@@ -594,7 +594,7 @@ export default function FinOpsDashboard() {
             <div>
               <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>{t.proj_savings}</div>
               <div className="gradient-text-green" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'Roboto Mono, monospace', margin: 0 }}>
-                \${usdSaved.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                ${usdSaved.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </div>
             </div>
           </div>
@@ -611,7 +611,7 @@ export default function FinOpsDashboard() {
         </div>
 
         <div style={{ zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '30px', pointerEvents: 'auto' }}>
-            <div className={\`terminal-container \${testState === 'testing' ? 'active' : ''}\`} style={{ marginBottom: '25px', backdropFilter: 'blur(5px)', background: 'rgba(0, 0, 0, 0.7)' }}>
+            <div className={`terminal-container ${testState === 'testing' ? 'active' : ''}`} style={{ marginBottom: '25px', backdropFilter: 'blur(5px)', background: 'rgba(0, 0, 0, 0.7)' }}>
                 <div className="terminal-scanline"></div>
                 <div style={{ color: '#8B949E', borderBottom: '1px solid #333', paddingBottom: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
                   <span>{t.terminal_title}</span>
@@ -659,9 +659,9 @@ export default function FinOpsDashboard() {
           </div>
         </div>
       </main>
-      <style dangerouslySetInnerHTML={{__html: \`
+      <style dangerouslySetInnerHTML={{__html: `
         @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
-      \`}} />
+      `}} />
     </div>
   );
 }
