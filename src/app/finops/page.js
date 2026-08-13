@@ -113,7 +113,7 @@ function DataPurificationHologram({ isTesting, results, lang }) {
     let time = 0;
 
     const particles = [];
-    const numParticles = 600; // Dense Swarm
+    const numParticles = 250; // Optimized for 60FPS
     
     for (let i = 0; i < numParticles; i++) {
       particles.push({
@@ -163,11 +163,9 @@ function DataPurificationHologram({ isTesting, results, lang }) {
         
         ctx.ellipse(0, 0, stretchX + pulse, stretchY + pulse, rotRing + (r * 0.8), 0, Math.PI * 2);
         
-        // Cyan Glow
+        // Cyan Glow (Optimized)
         ctx.strokeStyle = `rgba(0, 229, 255, ${0.4 - r * 0.1})`;
         ctx.lineWidth = isTesting ? 2 : 1;
-        ctx.shadowColor = '#00e5ff';
-        ctx.shadowBlur = 20;
         ctx.stroke();
       }
       ctx.restore();
@@ -273,35 +271,35 @@ function DataPurificationHologram({ isTesting, results, lang }) {
           }
         }
 
-        // Draw Nodes with Bloom and Chromatic Aberration
-        const radius = Math.max(0.1, (p1.state === 'filtering' ? 4.0 : 2.0) * p1.scale);
+        // Draw Nodes with Bloom (Optimized without shadowBlur)
+        const radius = Math.max(0.1, (p1.state === 'filtering' ? 3.0 : 1.5) * p1.scale);
         
         if (p1.state === 'noisy') {
           // Aberration: Draw Cyan channel slightly offset, then Red channel
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.5})`;
+          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.6})`;
           ctx.beginPath(); ctx.arc(p1.x - p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
           
           ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha})`;
-          ctx.shadowColor = '#ff0055';
-          ctx.shadowBlur = 15;
           ctx.beginPath(); ctx.arc(p1.x + p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
+          
+          // Simulated Bloom
+          ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha * 0.2})`;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
         } 
         else if (p1.state === 'quarantine') {
           ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha})`;
-          ctx.shadowColor = '#ff0000';
-          ctx.shadowBlur = 25;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha * 0.3})`;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 6, 0, Math.PI*2); ctx.fill();
         } 
         else if (p1.state === 'pure') {
           ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha})`;
-          ctx.shadowColor = '#00ffff';
-          ctx.shadowBlur = 20;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.2})`;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
         } 
         else { // Filtering
           ctx.fillStyle = '#ffffff';
-          ctx.shadowColor = '#ffffff';
-          ctx.shadowBlur = 30;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
         }
       }
