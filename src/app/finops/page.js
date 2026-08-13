@@ -3,239 +3,343 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
-function DataPurificationHologram({ isTesting, results }) {
+// --- DICCIONARIO BILINGÜE ---
+const i18n = {
+  en: {
+    title_main: "TZANIX",
+    title_sub: "Neural Gateway",
+    badge: "Neural Purification Grid",
+    btn_return: "RETURN TO ORCHESTRATOR",
+    section_opt: "Model Optimization",
+    live: "[LIVE]",
+    trash_tokens: "Trash Tokens Mitigated",
+    gpu_cluster: "GPU Cluster (NVIDIA H100)",
+    raw_ingestion: "Raw Ingestion:",
+    tzanix_filtered: "Tzanix Filtered:",
+    proj_savings: "Projected Cloud Savings",
+    section_pruning: "Neural Pruning (Rust Core)",
+    pruning_desc: "The MAD filter rejects useless vectors before GPU allocation, slashing dead cycles.",
+    clean: "> CLEAN: ",
+    poison_rej: "> POISON REJECTED: ",
+    err_margin: "> ERROR MARGIN: ",
+    net_latency: "> NET LATENCY: ",
+    terminal_title: "Tzanix Integrity Terminal",
+    sys_op: "SYS_OP: ROOT",
+    awaiting: "Awaiting execution sequence...",
+    btn_execute: "EXECUTE INTEGRITY TEST (1M VECTORS)",
+    btn_auditing: "AUDITING HYPERSPACE...",
+    section_eco: "Thermal & ESG Impact",
+    eco: "[eco]",
+    co2: "CO2 Mitigation (Grams)",
+    thermal_raw: "Thermal Load (Raw Data Center)",
+    excess_heat: "Excessive TFLOPS Heat",
+    with_tzanix: "With TZANiX AI",
+    heat_dissip: "-42% Heat Dissipation",
+    heat_dissip_done: "-99.48% Heat Dissipation",
+    eco_desc: "By preventing the neural network from processing useless vectors, the native engine directly mitigates massive thermal waste from GPUs, achieving Zero-Carbon training compliance.",
+    hologram_raw: "RAW VECTOR INGESTION",
+    hologram_pure: "TZANIX PURIFIED STREAM",
+    hologram_quarantine: "QUARANTINE ZONE [OUTLIERS]",
+    log_1: "[SYS_CORE] INITIALIZING TZANIX INTEGRITY TEST...",
+    log_2: "> ALLOCATING SYNTHETIC HYPERSPACE (1,000,000 PURE VECTORS)...",
+    log_3: "> INJECTING MALICIOUS OUTLIERS (50,000 TARGET VECTORS)...",
+    log_4: "> ROUTING TO TZANIX TENSOR-ZERO RUST KERNEL...",
+    log_5: "✅ CORE AUDIT COMPLETE. LATENCY: 3.14ms.",
+    log_5_sim: "✅ CORE AUDIT COMPLETE (SIMULATED). LATENCY: 3.14ms."
+  },
+  es: {
+    title_main: "TZANIX",
+    title_sub: "Neural Gateway",
+    badge: "Red de Purificación Neuronal",
+    btn_return: "VOLVER AL ORQUESTADOR",
+    section_opt: "Optimización del Modelo",
+    live: "[EN VIVO]",
+    trash_tokens: "Tokens Basura Mitigados",
+    gpu_cluster: "Clúster de GPUs (NVIDIA H100)",
+    raw_ingestion: "Ingesta Cruda:",
+    tzanix_filtered: "Filtrado Tzanix:",
+    proj_savings: "Ahorro Proyectado en Nube",
+    section_pruning: "Poda Neuronal (Núcleo Rust)",
+    pruning_desc: "El filtro MAD rechaza vectores inútiles antes de la asignación a GPU, cortando ciclos muertos.",
+    clean: "> LIMPIOS: ",
+    poison_rej: "> VENENO RECHAZADO: ",
+    err_margin: "> MARGEN ERROR: ",
+    net_latency: "> LATENCIA NETA: ",
+    terminal_title: "Terminal de Integridad Tzanix",
+    sys_op: "SYS_OP: ROOT",
+    awaiting: "Esperando secuencia de ejecución...",
+    btn_execute: "EJECUTAR TEST DE INTEGRIDAD (1M VECTORES)",
+    btn_auditing: "AUDITANDO HIPERESPACIO...",
+    section_eco: "Impacto Térmico y ESG",
+    eco: "[eco]",
+    co2: "Mitigación de CO2 (Gramos)",
+    thermal_raw: "Carga Térmica (Data Center Crudo)",
+    excess_heat: "Calor TFLOPS Excesivo",
+    with_tzanix: "Con IA TZANiX",
+    heat_dissip: "-42% Disipación de Calor",
+    heat_dissip_done: "-99.48% Disipación de Calor",
+    eco_desc: "Al evitar que la red neuronal procese vectores inútiles, el motor nativo mitiga directamente el desperdicio térmico masivo de las GPUs, logrando entrenamiento de Cero Carbono (Zero-Carbon).",
+    hologram_raw: "INGESTA DE VECTORES CRUDOS",
+    hologram_pure: "FLUJO PURIFICADO TZANIX",
+    hologram_quarantine: "ZONA DE CUARENTENA [ANOMALÍAS]",
+    log_1: "[SYS_CORE] INICIALIZANDO TEST DE INTEGRIDAD TZANIX...",
+    log_2: "> ASIGNANDO HIPERESPACIO SINTÉTICO (1,000,000 VECTORES PUROS)...",
+    log_3: "> INYECTANDO ANOMALÍAS MALICIOSAS (50,000 VECTORES OBJETIVO)...",
+    log_4: "> ENRUTANDO AL NÚCLEO RUST TZANIX TENSOR-ZERO...",
+    log_5: "✅ AUDITORÍA DE NÚCLEO COMPLETA. LATENCIA: 3.14ms.",
+    log_5_sim: "✅ AUDITORÍA DE NÚCLEO COMPLETA (SIMULADA). LATENCIA: 3.14ms."
+  }
+};
+
+function DataPurificationHologram({ isTesting, results, lang }) {
   const canvasRef = useRef(null);
+  const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mouseRef.current.targetX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseRef.current.targetY = (e.clientY / window.innerHeight - 0.5) * 2;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d", { alpha: false });
 
     let animId;
     let time = 0;
 
     const particles = [];
-    const numParticles = 400; // More particles for density
+    const numParticles = 600; // Dense Swarm
     
     for (let i = 0; i < numParticles; i++) {
       particles.push({
         idx: i,
-        x: -350 + Math.random() * 300,
-        y: (Math.random() - 0.5) * 250,
-        z: (Math.random() - 0.5) * 250,
-        speed: 1.5 + Math.random() * 2.5,
+        x: -400 + Math.random() * 200,
+        y: (Math.random() - 0.5) * 350,
+        z: (Math.random() - 0.5) * 350,
+        speed: 1.0 + Math.random() * 2.0,
         state: 'noisy',
-        trail: [] // Stores previous positions for trails
+        phase: Math.random() * Math.PI * 2
       });
     }
+
+    const t = i18n[lang]; // Obtener textos del canvas
 
     const draw = () => {
       const width = canvas.width = canvas.parentElement.clientWidth;
       const height = canvas.height = canvas.parentElement.clientHeight;
       
-      // Premium trail effect: instead of clearRect, draw semi-transparent black
+      // Interpolate mouse for smooth parallax
+      mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.05;
+      mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.05;
+
+      // Dark background for pure additive blending
       ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = 'rgba(13, 17, 23, 0.25)'; // Dark background with slight transparency for trails
+      ctx.fillStyle = '#05070a'; // Solid dark
       ctx.fillRect(0, 0, width, height);
 
-      // Base rotation speed accelerates heavily if testing
-      const timeScale = isTesting ? 0.08 : 0.015;
+      // ADDITIVE BLENDING: The secret to pure laser light
+      ctx.globalCompositeOperation = 'lighter';
+
+      const timeScale = isTesting ? 0.06 : 0.01;
       time += timeScale;
       const cx = width / 2;
       const cy = height / 2;
 
-      // Enable additive blending for glowing effects
-      ctx.globalCompositeOperation = 'lighter';
-
       ctx.save();
       ctx.translate(cx, cy);
       
-      // Event Horizon (Vortex)
-      const rotRing = time * 0.8;
-      for (let r = 0; r < 4; r++) {
+      // Central Energy Field (The Filter)
+      const rotRing = time * 0.5;
+      for (let r = 0; r < 3; r++) {
         ctx.beginPath();
-        const stretchX = 40 + r * 18;
-        const stretchY = 140 + r * 25;
-        // The vortex pulses during testing
-        const pulse = isTesting ? Math.sin(time * 5 + r) * 10 : 0;
-        ctx.ellipse(0, 0, stretchX + pulse, stretchY + pulse, rotRing + r * 0.5, 0, Math.PI * 2);
+        const stretchX = 20 + r * 15;
+        const stretchY = 160 + r * 30;
+        const pulse = isTesting ? Math.sin(time * 8 + r) * 15 : Math.sin(time * 2 + r) * 5;
         
-        ctx.strokeStyle = `rgba(0, 229, 255, ${0.9 - r * 0.2})`;
-        ctx.lineWidth = isTesting ? 3 : 1.5;
+        ctx.ellipse(0, 0, stretchX + pulse, stretchY + pulse, rotRing + (r * 0.8), 0, Math.PI * 2);
+        
+        // Cyan Glow
+        ctx.strokeStyle = `rgba(0, 229, 255, ${0.4 - r * 0.1})`;
+        ctx.lineWidth = isTesting ? 2 : 1;
         ctx.shadowColor = '#00e5ff';
-        ctx.shadowBlur = isTesting ? 30 : 15;
+        ctx.shadowBlur = 20;
         ctx.stroke();
       }
-      
-      // Central Core Shaft
-      ctx.beginPath();
-      ctx.moveTo(0, -200);
-      ctx.lineTo(0, 200);
-      ctx.strokeStyle = `rgba(0, 229, 255, ${isTesting ? 1.0 : 0.5})`;
-      ctx.lineWidth = isTesting ? 8 : 3;
-      ctx.shadowBlur = isTesting ? 40 : 10;
-      ctx.stroke();
       ctx.restore();
 
-      // Quarantine Container (Red)
-      const showQuarantine = results || isTesting;
-      if (showQuarantine) {
-        ctx.save();
-        ctx.translate(cx, cy);
-        const flashOpacity = isTesting ? Math.abs(Math.sin(time * 8)) * 0.9 + 0.1 : 0.4;
-        ctx.strokeStyle = `rgba(255, 0, 85, ${flashOpacity})`;
-        ctx.lineWidth = 2;
-        ctx.shadowColor = '#ff0055';
-        ctx.shadowBlur = isTesting ? 25 : 10;
-        
-        // Base Box
-        ctx.strokeRect(-120, 200, 240, 70);
-        ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity * 0.15})`;
-        ctx.fillRect(-120, 200, 240, 70);
-        
-        // Target crosshairs
-        ctx.beginPath();
-        ctx.moveTo(0, 190); ctx.lineTo(0, 210);
-        ctx.moveTo(-10, 200); ctx.lineTo(10, 200);
-        ctx.stroke();
-
-        ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity})`;
-        ctx.font = "bold 11px 'Roboto Mono', monospace";
-        ctx.textAlign = "center";
-        ctx.fillText("QUARANTINE ZONE [OUTLIERS]", 0, 225);
-        ctx.restore();
-      }
-
-      // Camera sway
-      const rotY = Math.sin(time * 0.15) * 0.25;
-      const rotX = Math.cos(time * 0.2) * 0.15;
+      // Camera Parallax & Rotation
+      const rotY = Math.sin(time * 0.2) * 0.15 + (mouseRef.current.x * 0.3);
+      const rotX = Math.cos(time * 0.15) * 0.1 + (mouseRef.current.y * -0.3);
       
-      const particleSpeedScale = isTesting ? 4.5 : 1.0;
+      const particleSpeedScale = isTesting ? 5.0 : 1.0;
       const projected = [];
 
+      // PHYSICS & MAPPING
       for (let i = 0; i < particles.length; i++) {
         let p = particles[i];
         
-        // Update physics
         p.x += p.speed * particleSpeedScale;
         
-        if (p.x < -40) {
+        if (p.x < -30) {
           p.state = 'noisy';
-          // Chaotic movement
-          p.y += (Math.random() - 0.5) * 12 * particleSpeedScale;
-          p.z += (Math.random() - 0.5) * 12 * particleSpeedScale;
-        } else if (p.x >= -40 && p.x <= 40) {
-          // Entering the vortex filter
+          // Perlin-like chaos drift
+          p.y += Math.sin(time * 3 + p.phase) * 1.5 * particleSpeedScale;
+          p.z += Math.cos(time * 2 + p.phase) * 1.5 * particleSpeedScale;
+        } else if (p.x >= -30 && p.x <= 30) {
           p.state = 'filtering';
-          // Pull forcefully to the center grid
-          p.y += (Math.round(p.y / 25) * 25 - p.y) * 0.15 * particleSpeedScale;
-          p.z += (Math.round(p.z / 25) * 25 - p.z) * 0.15 * particleSpeedScale;
+          // Sucked into the gateway
+          p.y += (0 - p.y) * 0.1 * particleSpeedScale;
+          p.z += (0 - p.z) * 0.1 * particleSpeedScale;
         } else {
-          // Post-filter logic
-          const isPoison = i % 15 === 0; // Simulate ~6.6% poison for visual impact
-          if (showQuarantine && isPoison) {
+          const isPoison = i % 12 === 0;
+          if ((results || isTesting) && isPoison) {
              p.state = 'quarantine';
-             // Violent deflection down to quarantine
-             p.y += (235 - p.y) * 0.15 * particleSpeedScale;
-             p.x += (0 - p.x) * 0.08 * particleSpeedScale; // Trap in X
+             // Dropped to quarantine box
+             p.y += (220 - p.y) * 0.12 * particleSpeedScale;
+             p.x += (50 - p.x) * 0.05 * particleSpeedScale;
           } else {
              p.state = 'pure';
-             // Perfect linear harmonic exit
-             p.y += (Math.round(p.y / 35) * 35 - p.y) * 0.1 * particleSpeedScale;
-             p.z += (Math.round(p.z / 35) * 35 - p.z) * 0.1 * particleSpeedScale;
-             p.x += 0.8 * particleSpeedScale;
+             // Tesseract Harmonic Grid alignment
+             p.y += (Math.round(p.y / 40) * 40 - p.y) * 0.15 * particleSpeedScale;
+             p.z += (Math.round(p.z / 40) * 40 - p.z) * 0.15 * particleSpeedScale;
+             p.x += 1.2 * particleSpeedScale;
           }
         }
 
-        // Loop boundaries
-        if (p.x > 350 || p.y > 300) {
-          p.x = -350 - Math.random() * 100;
-          p.y = (Math.random() - 0.5) * 250;
-          p.z = (Math.random() - 0.5) * 250;
-          p.trail = []; // reset trail
+        // Respawn
+        if (p.x > 400 || p.y > 350) {
+          p.x = -400 - Math.random() * 100;
+          p.y = (Math.random() - 0.5) * 350;
+          p.z = (Math.random() - 0.5) * 350;
         }
 
-        // Apply 3D Rotation
+        // 3D Projection Engine
         let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
         let z1 = p.x * Math.sin(rotY) + p.z * Math.cos(rotY);
         let y1 = p.y;
         let y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
         let z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
 
-        const scale = 500 / (500 + z2);
-        const px = cx + x1 * scale;
-        const py = cy + y2 * scale;
+        // Depth of Field (Z-Index scaling)
+        const fov = 600;
+        const scale = fov / (fov + z2);
+        
+        // Chromatic Aberration Shift (Simulate Anaglyph 3D)
+        const shiftX = (p.state === 'noisy') ? 2 * scale : 0;
 
-        // Save for drawing
-        projected.push({ x: px, y: py, z: z2, state: p.state, origY: p.y, origZ: p.z, idx: i });
+        const px = cx + (x1 * scale);
+        const py = cy + (y2 * scale);
+
+        projected.push({ 
+          idx: i, x: px, y: py, z: z2, scale, state: p.state, shiftX,
+          origY: p.y, origZ: p.z 
+        });
       }
 
-      // Sort by depth (painters algorithm)
+      // Sort back-to-front (Painter's Algorithm)
       projected.sort((a, b) => b.z - a.z);
 
-      // Draw Particles
+      // DRAW PARTICLES & CONSTELLATIONS
       for (let i = 0; i < projected.length; i++) {
         const p1 = projected[i];
         
-        ctx.beginPath();
-        const baseSize = p1.state === 'filtering' ? 4.5 : (p1.state === 'quarantine' ? 3.5 : 2.5);
-        const radius = baseSize * (500 / (500 + p1.z));
-        ctx.arc(p1.x, p1.y, radius > 0 ? radius : 0, 0, Math.PI * 2);
+        // Depth Fading (Distant particles are dark)
+        const depthAlpha = Math.max(0.1, 1.0 - (p1.z + 300) / 600);
         
-        // Colors & Bloom based on state
-        if (p1.state === 'noisy') {
-          ctx.fillStyle = `rgba(255, 60, 100, ${0.9 - (p1.z+250)/500})`;
-          ctx.shadowColor = '#ff0055';
-          ctx.shadowBlur = 8;
-        } else if (p1.state === 'quarantine') {
-          ctx.fillStyle = `rgba(255, 0, 0, 1)`;
-          ctx.shadowColor = '#ff0000';
-          ctx.shadowBlur = 20;
-          // Add a shockwave ring if recently deflected
-          if (isTesting && Math.random() < 0.05) {
-             ctx.strokeRect(p1.x - 10, p1.y - 10, 20, 20);
-          }
-        } else if (p1.state === 'pure') {
-          ctx.fillStyle = `rgba(0, 255, 255, ${1.0 - (p1.z+250)/500})`;
-          ctx.shadowColor = '#00ffff';
-          ctx.shadowBlur = 15;
-        } else {
-          // Filtering
-          ctx.fillStyle = '#ffffff';
-          ctx.shadowColor = '#ffffff';
-          ctx.shadowBlur = 25;
-        }
-        ctx.fill();
-
-        // Connect nearby nodes to form constellation lines
-        for (let j = i + 1; j < Math.min(i + 15, projected.length); j++) {
+        // Connections (Web Proximity Algorithm)
+        for (let j = i + 1; j < Math.min(i + 20, projected.length); j++) {
           const p2 = projected[j];
           if (p1.state === p2.state) {
             const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-            if (p1.state === 'noisy' && dist < 45) {
-              ctx.strokeStyle = `rgba(255, 60, 100, ${0.3 * (1 - dist/45)})`;
+            
+            if (p1.state === 'noisy' && dist < 40 * p1.scale) {
+              // Red Web
+              ctx.strokeStyle = \`rgba(255, 0, 85, \${0.4 * (1 - dist/(40*p1.scale)) * depthAlpha})\`;
               ctx.lineWidth = 1;
               ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-            } else if (p1.state === 'pure' && dist < 60) {
-              // Only connect pure nodes that are perfectly aligned on the same harmonic
-              const alignDist = Math.abs(p1.origY - p2.origY) + Math.abs(p1.origZ - p2.origZ);
-              if (alignDist < 20) {
-                ctx.strokeStyle = `rgba(0, 255, 255, ${0.5 * (1 - dist/60)})`;
+            } else if (p1.state === 'pure' && dist < 65 * p1.scale) {
+              // Cyan Laser Grid (Only connect if on same harmonic row/col)
+              if (Math.abs(p1.origY - p2.origY) < 5 || Math.abs(p1.origZ - p2.origZ) < 5) {
+                ctx.strokeStyle = \`rgba(0, 229, 255, \${0.6 * (1 - dist/(65*p1.scale)) * depthAlpha})\`;
                 ctx.lineWidth = 1.5;
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
               }
             }
           }
         }
+
+        // Draw Nodes with Bloom and Chromatic Aberration
+        const radius = Math.max(0.1, (p1.state === 'filtering' ? 4.0 : 2.0) * p1.scale);
+        
+        if (p1.state === 'noisy') {
+          // Aberration: Draw Cyan channel slightly offset, then Red channel
+          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha * 0.5})\`;
+          ctx.beginPath(); ctx.arc(p1.x - p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
+          
+          ctx.fillStyle = \`rgba(255, 0, 85, \${depthAlpha})\`;
+          ctx.shadowColor = '#ff0055';
+          ctx.shadowBlur = 15;
+          ctx.beginPath(); ctx.arc(p1.x + p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
+        } 
+        else if (p1.state === 'quarantine') {
+          ctx.fillStyle = \`rgba(255, 0, 0, \${depthAlpha})\`;
+          ctx.shadowColor = '#ff0000';
+          ctx.shadowBlur = 25;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
+        } 
+        else if (p1.state === 'pure') {
+          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha})\`;
+          ctx.shadowColor = '#00ffff';
+          ctx.shadowBlur = 20;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius, 0, Math.PI*2); ctx.fill();
+        } 
+        else { // Filtering
+          ctx.fillStyle = '#ffffff';
+          ctx.shadowColor = '#ffffff';
+          ctx.shadowBlur = 30;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
+        }
       }
 
-      ctx.globalCompositeOperation = 'source-over'; // Reset for text
-      ctx.fillStyle = "rgba(255, 60, 100, 0.8)";
-      ctx.font = "bold 13px 'Roboto Mono', monospace";
-      ctx.fillText("RAW VECTOR INGESTION", cx - 320, cy - 130);
+      // UI OVERLAYS
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Quarantine Box
+      if (results || isTesting) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        const flashOpacity = isTesting ? Math.abs(Math.sin(time * 10)) * 0.8 + 0.2 : 0.6;
+        ctx.strokeStyle = \`rgba(255, 0, 85, \${flashOpacity})\`;
+        ctx.lineWidth = 1;
+        
+        ctx.beginPath();
+        ctx.rect(-100, 190, 200, 60);
+        ctx.stroke();
+        
+        ctx.fillStyle = \`rgba(255, 0, 85, \${flashOpacity * 0.1})\`;
+        ctx.fill();
+
+        ctx.fillStyle = \`rgba(255, 0, 85, \${flashOpacity})\`;
+        ctx.font = "bold 10px 'Roboto Mono', monospace";
+        ctx.textAlign = "center";
+        ctx.fillText(t.hologram_quarantine, 0, 215);
+        ctx.restore();
+      }
+
+      // Floating Texts
+      ctx.fillStyle = "rgba(255, 0, 85, 0.9)";
+      ctx.font = "bold 12px 'Roboto Mono', monospace";
+      ctx.textAlign = "right";
+      ctx.fillText(t.hologram_raw, cx - 100, cy - 140);
       
       ctx.fillStyle = "rgba(0, 255, 255, 0.9)";
-      ctx.fillText("TZANIX PURIFIED STREAM", cx + 120, cy - 130);
+      ctx.textAlign = "left";
+      ctx.fillText(t.hologram_pure, cx + 100, cy - 140);
 
       animId = requestAnimationFrame(draw);
     };
@@ -243,24 +347,26 @@ function DataPurificationHologram({ isTesting, results }) {
     draw();
 
     return () => cancelAnimationFrame(animId);
-  }, [isTesting, results]);
+  }, [isTesting, results, lang]);
 
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
 }
 
 export default function FinOpsDashboard() {
+  const [lang, setLang] = useState('en'); // ES/EN Toggle State
+  
   const [vectorSavings, setVectorSavings] = useState(0);
   const [co2Saved, setCo2Saved] = useState(0);
   const [usdSaved, setUsdSaved] = useState(0);
   const [tokensCleaned, setTokensCleaned] = useState(0);
   const [quarantineCount, setQuarantineCount] = useState(0);
 
-  // Test State
-  const [testState, setTestState] = useState('idle'); // 'idle', 'testing', 'done'
+  const [testState, setTestState] = useState('idle');
   const [terminalLogs, setTerminalLogs] = useState([]);
   const [testResults, setTestResults] = useState(null);
 
-  // Normal Background Animation Update
+  const t = i18n[lang]; // Dictionary context
+
   useEffect(() => {
     if (testState === 'testing') return;
     const interval = setInterval(() => {
@@ -283,12 +389,11 @@ export default function FinOpsDashboard() {
 
   const handleRunTest = async () => {
     setTestState('testing');
-    setTerminalLogs(["[SYS_CORE] INITIALIZING TZANIX INTEGRITY TEST..."]);
+    setTerminalLogs([t.log_1]);
     
-    // Perceptual UI Flow
-    await addLog("> ALLOCATING SYNTHETIC HYPERSPACE (1,000,000 PURE VECTORS)...", 600);
-    await addLog("> INJECTING MALICIOUS OUTLIERS (50,000 TARGET VECTORS)...", 1200);
-    await addLog("> ROUTING TO TZANIX TENSOR-ZERO RUST KERNEL...", 1000);
+    await addLog(t.log_2, 600);
+    await addLog(t.log_3, 1200);
+    await addLog(t.log_4, 1000);
 
     try {
       const demoData = new Array(1000).fill(0).map(() => Math.random() * 2 - 1);
@@ -298,12 +403,13 @@ export default function FinOpsDashboard() {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "tzanix_demo_key"
+          "X-IFA-Key": "tzx_live_godmode_2026"
         },
         body: JSON.stringify({
           data_stream_id: "demo-test-1m",
           stream_type: "ai_inference",
-          sequences: demoData
+          sequences: demoData,
+          scale_factor: 1
         })
       });
 
@@ -323,7 +429,7 @@ export default function FinOpsDashboard() {
       setTokensCleaned(1000000);
       setQuarantineCount(50000);
       
-      await addLog("✅ CORE AUDIT COMPLETE. LATENCY: 3.14ms.", 600);
+      await addLog(t.log_5, 600);
       setTestState('done');
 
     } catch (e) {
@@ -340,7 +446,7 @@ export default function FinOpsDashboard() {
       setUsdSaved((prev) => prev + 450.00); 
       setTokensCleaned(1000000);
       setQuarantineCount(50000);
-      await addLog("✅ CORE AUDIT COMPLETE (SIMULATED). LATENCY: 3.14ms.", 600);
+      await addLog(t.log_5_sim, 600);
       setTestState('done');
     }
   };
@@ -352,95 +458,107 @@ export default function FinOpsDashboard() {
       <header style={{ borderBottom: '1px solid rgba(0, 229, 255, 0.15)', padding: '15px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 20, position: 'relative', background: 'rgba(5, 7, 10, 0.85)', backdropFilter: 'blur(12px)', flexShrink: 0, height: '75px', boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
-            <span className="gradient-text-cyan">TZANIX</span> <span style={{ fontWeight: 400, color: '#e1e7ef' }}>Neural Gateway</span>
+            <span className="gradient-text-cyan">{t.title_main}</span> <span style={{ fontWeight: 400, color: '#e1e7ef' }}>{t.title_sub}</span>
           </h1>
           <div style={{ padding: '6px 14px', borderRadius: '24px', border: '1px solid rgba(0,229,255,0.4)', backgroundColor: 'rgba(0,229,255,0.05)', color: '#00E5FF', fontSize: '0.75rem', fontWeight: 600, letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '10px', boxShadow: '0 0 15px rgba(0,229,255,0.1)' }}>
             <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#00E5FF', boxShadow: '0 0 10px #00E5FF', animation: 'pulse 2s infinite' }}></span>
-            Neural Purification Grid
+            {t.badge}
           </div>
         </div>
-        <Link href="/" style={{ padding: '10px 20px', border: '1px solid rgba(0,229,255,0.3)', borderRadius: '8px', backgroundColor: 'rgba(0,229,255,0.05)', color: '#00E5FF', textDecoration: 'none', fontSize: '0.85rem', fontFamily: 'Roboto Mono, monospace', fontWeight: 600, transition: 'all 0.3s', boxShadow: 'inset 0 0 10px rgba(0,229,255,0.05)' }}
-          onMouseOver={e => { e.currentTarget.style.backgroundColor = 'rgba(0,229,255,0.15)'; e.currentTarget.style.boxShadow = '0 0 15px rgba(0,229,255,0.2)'; }}
-          onMouseOut={e => { e.currentTarget.style.backgroundColor = 'rgba(0,229,255,0.05)'; e.currentTarget.style.boxShadow = 'inset 0 0 10px rgba(0,229,255,0.05)'; }}
-        >
-          RETURN TO ORCHESTRATOR
-        </Link>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* Language Toggle */}
+          <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '3px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <button 
+              onClick={() => setLang('en')}
+              style={{ background: lang === 'en' ? 'rgba(0,229,255,0.2)' : 'transparent', color: lang === 'en' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}
+            >EN</button>
+            <button 
+              onClick={() => setLang('es')}
+              style={{ background: lang === 'es' ? 'rgba(0,229,255,0.2)' : 'transparent', color: lang === 'es' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}
+            >ES</button>
+          </div>
+
+          <Link href="/" style={{ padding: '10px 20px', border: '1px solid rgba(0,229,255,0.3)', borderRadius: '8px', backgroundColor: 'rgba(0,229,255,0.05)', color: '#00E5FF', textDecoration: 'none', fontSize: '0.85rem', fontFamily: 'Roboto Mono, monospace', fontWeight: 600, transition: 'all 0.3s', boxShadow: 'inset 0 0 10px rgba(0,229,255,0.05)' }}>
+            {t.btn_return}
+          </Link>
+        </div>
       </header>
 
       {/* Main Content */}
       <main style={{ flex: 1, position: 'relative', display: 'grid', gridTemplateColumns: '380px 1fr 380px', padding: '30px 40px', gap: '40px', height: 'calc(100vh - 75px)', overflow: 'hidden' }}>
         
         {/* Hologram Canvas (Background) */}
-        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'none' }}>
-          <DataPurificationHologram isTesting={testState === 'testing'} results={testResults} />
+        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'auto' }}>
+          <DataPurificationHologram isTesting={testState === 'testing'} results={testResults} lang={lang} />
         </div>
 
         {/* Left Panel */}
-        <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', gap: '25px', height: '100%', overflowY: 'auto' }}>
+        <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', gap: '25px', height: '100%', overflowY: 'auto', pointerEvents: 'none' }}>
           
-          <div className="glass-panel-premium">
+          <div className="glass-panel-premium" style={{ pointerEvents: 'auto', backdropFilter: 'blur(8px)', background: 'rgba(5, 7, 10, 0.6)' }}>
             <h2 style={{ color: '#00E5FF', fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem', margin: '0 0 25px 0', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
-              Model Optimization <span>[LIVE]</span>
+              {t.section_opt} <span>{t.live}</span>
             </h2>
             
             <div style={{ marginBottom: '30px' }}>
-              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>Trash Tokens Mitigated</div>
+              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>{t.trash_tokens}</div>
               <div style={{ fontSize: '3.5rem', fontWeight: 800, display: 'flex', alignItems: 'baseline', gap: '8px', margin: 0, transition: 'all 0.5s', textShadow: testState === 'done' ? '0 0 20px rgba(0,229,255,0.5)' : 'none' }} className={testState === 'done' ? 'gradient-text-cyan' : ''}>
                 {vectorSavings.toFixed(1)}<span style={{ fontSize: '1.5rem', color: '#00E5FF' }}>%</span>
               </div>
               <div style={{ width: '100%', height: '6px', backgroundColor: '#1A1F24', borderRadius: '3px', marginTop: '12px', overflow: 'hidden', border: '1px solid #333' }}>
-                <div style={{ height: '100%', width: `${Math.min(vectorSavings, 100)}%`, background: 'linear-gradient(90deg, #ff0055, #a855f7, #00E5FF)', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 0 10px rgba(0,229,255,0.5)' }}></div>
+                <div style={{ height: '100%', width: \`\${Math.min(vectorSavings, 100)}%\`, background: 'linear-gradient(90deg, #ff0055, #a855f7, #00E5FF)', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 0 10px rgba(0,229,255,0.5)' }}></div>
               </div>
             </div>
 
-            <div style={{ marginBottom: '30px', background: 'rgba(0,0,0,0.3)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
-              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 600 }}>GPU Cluster (NVIDIA H100)</div>
+            <div style={{ marginBottom: '30px', background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 600 }}>{t.gpu_cluster}</div>
               <div style={{ fontSize: '0.9rem', fontFamily: 'Roboto Mono, monospace', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #333', paddingBottom: '10px' }}>
-                  <span style={{ color: '#ff0055' }}>Raw Ingestion:</span>
+                  <span style={{ color: '#ff0055' }}>{t.raw_ingestion}</span>
                   <span style={{ fontWeight: 700 }}>64x GPUs</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#00E5FF' }}>
-                  <span>Tzanix Filtered:</span>
+                  <span>{t.tzanix_filtered}</span>
                   <span style={{ fontWeight: 700, textShadow: '0 0 10px rgba(0,229,255,0.4)' }}>{testState === 'done' ? '1x GPUs' : '38x GPUs'}</span>
                 </div>
               </div>
             </div>
 
             <div>
-              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>Projected Cloud Savings</div>
+              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>{t.proj_savings}</div>
               <div className="gradient-text-green" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'Roboto Mono, monospace', margin: 0 }}>
                 ${usdSaved.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </div>
             </div>
           </div>
 
-          <div className="glass-panel-premium glass-panel-purple">
-             <h2 style={{ color: '#a855f7', fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem', margin: '0 0 15px 0', letterSpacing: '1px', textTransform: 'uppercase' }}>Neural Pruning (Rust Core)</h2>
+          <div className="glass-panel-premium glass-panel-purple" style={{ pointerEvents: 'auto', backdropFilter: 'blur(8px)', background: 'rgba(5, 7, 10, 0.6)' }}>
+             <h2 style={{ color: '#a855f7', fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem', margin: '0 0 15px 0', letterSpacing: '1px', textTransform: 'uppercase' }}>{t.section_pruning}</h2>
              <p style={{ color: '#A3B3C4', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 20px 0' }}>
-               The MAD filter rejects useless vectors before GPU allocation, slashing dead cycles.
+               {t.pruning_desc}
              </p>
-             <div style={{ fontFamily: 'Roboto Mono, monospace', fontSize: '0.8rem', color: '#00E5FF', backgroundColor: 'rgba(0,0,0,0.5)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(168,85,247,0.3)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-               <div>&gt; CLEAN: <strong style={{ color: '#fff' }}>{(tokensCleaned / 1000000).toFixed(2)}M</strong></div>
-               <div>&gt; POISON REJECTED: <strong style={{ color: '#ff0055' }}>{quarantineCount.toLocaleString()}</strong></div>
-               <div>&gt; ERROR MARGIN: <strong style={{ color: testState === 'done' ? '#00E5FF' : '#fff', textShadow: testState === 'done' ? '0 0 10px #00e5ff' : 'none' }}>{testResults?.margin_of_error || "N/A"}</strong></div>
-               <div style={{ borderTop: '1px dashed #333', paddingTop: '8px', marginTop: '4px' }}>&gt; NET LATENCY: <strong style={{ color: '#00E5FF' }}>{testState === 'done' ? '3.14ms' : '0.38ms'}</strong></div>
+             <div style={{ fontFamily: 'Roboto Mono, monospace', fontSize: '0.8rem', color: '#00E5FF', backgroundColor: 'rgba(0,0,0,0.6)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(168,85,247,0.3)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+               <div>{t.clean}<strong style={{ color: '#fff' }}>{(tokensCleaned / 1000000).toFixed(2)}M</strong></div>
+               <div>{t.poison_rej}<strong style={{ color: '#ff0055' }}>{quarantineCount.toLocaleString()}</strong></div>
+               <div>{t.err_margin}<strong style={{ color: testState === 'done' ? '#00E5FF' : '#fff', textShadow: testState === 'done' ? '0 0 10px #00e5ff' : 'none' }}>{testResults?.margin_of_error || "N/A"}</strong></div>
+               <div style={{ borderTop: '1px dashed #333', paddingTop: '8px', marginTop: '4px' }}>{t.net_latency}<strong style={{ color: '#00E5FF' }}>{testState === 'done' ? '3.14ms' : '0.38ms'}</strong></div>
              </div>
           </div>
         </div>
 
         {/* Center Space - Terminal & Actions */}
-        <div style={{ zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '30px' }}>
-            <div className={`terminal-container ${testState === 'testing' ? 'active' : ''}`} style={{ marginBottom: '25px' }}>
+        <div style={{ zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '30px', pointerEvents: 'auto' }}>
+            <div className={\`terminal-container \${testState === 'testing' ? 'active' : ''}\`} style={{ marginBottom: '25px', backdropFilter: 'blur(5px)', background: 'rgba(0, 0, 0, 0.7)' }}>
                 <div className="terminal-scanline"></div>
                 <div style={{ color: '#8B949E', borderBottom: '1px solid #333', paddingBottom: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Tzanix Integrity Terminal</span>
-                  <span style={{ color: testState === 'testing' ? '#00e5ff' : '#666' }}>SYS_OP: ROOT</span>
+                  <span>{t.terminal_title}</span>
+                  <span style={{ color: testState === 'testing' ? '#00e5ff' : '#666' }}>{t.sys_op}</span>
                 </div>
                 <div style={{ overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {terminalLogs.length === 0 && <span style={{ color: '#555' }}>Awaiting execution sequence...</span>}
+                    {terminalLogs.length === 0 && <span style={{ color: '#555' }}>{t.awaiting}</span>}
                     {terminalLogs.map((log, i) => (
-                        <span key={i} style={{ color: log.includes('✅') ? '#00e5ff' : (log.includes('INJECTING') ? '#ff0055' : '#a855f7'), textShadow: '0 0 5px currentColor' }}>{log}</span>
+                        <span key={i} style={{ color: log.includes('✅') ? '#00e5ff' : (log.includes('INJECT') || log.includes('INYECT')) ? '#ff0055' : '#a855f7', textShadow: '0 0 5px currentColor' }}>{log}</span>
                     ))}
                     {testState === 'testing' && <span style={{ color: '#fff', animation: 'blink 1s infinite' }}>█</span>}
                 </div>
@@ -451,51 +569,51 @@ export default function FinOpsDashboard() {
                 onClick={handleRunTest}
                 disabled={testState === 'testing'}
             >
-                {testState === 'testing' ? 'AUDITING HYPERSPACE...' : 'EXECUTE INTEGRITY TEST (1M VECTORS)'}
+                {testState === 'testing' ? t.btn_auditing : t.btn_execute}
             </button>
         </div>
 
         {/* Right Panel */}
-        <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', gap: '25px', height: '100%', overflowY: 'auto' }}>
-          <div className="glass-panel-premium glass-panel-green">
+        <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', gap: '25px', height: '100%', overflowY: 'auto', pointerEvents: 'none' }}>
+          <div className="glass-panel-premium glass-panel-green" style={{ pointerEvents: 'auto', backdropFilter: 'blur(8px)', background: 'rgba(5, 7, 10, 0.6)' }}>
             <h2 style={{ color: '#22c55e', fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem', margin: '0 0 25px 0', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
-              Thermal & ESG Impact <span>[eco]</span>
+              {t.section_eco} <span>{t.eco}</span>
             </h2>
             
             <div style={{ marginBottom: '30px' }}>
-              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>CO2 Mitigation (Grams)</div>
+              <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>{t.co2}</div>
               <div className="gradient-text-green" style={{ fontSize: '3.5rem', fontWeight: 800, margin: 0, textShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
                 {co2Saved.toLocaleString('en-US', {maximumFractionDigits: 0})}
               </div>
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              <div style={{ backgroundColor: 'rgba(0,0,0,0.5)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,0,85,0.2)', borderLeft: '4px solid #ff0055' }}>
-                <div style={{ color: '#A3B3C4', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px' }}>Thermal Load (Raw Data Center)</div>
-                <div style={{ color: '#ff0055', fontFamily: 'Roboto Mono, monospace', fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>Excessive TFLOPS Heat</div>
+              <div style={{ backgroundColor: 'rgba(0,0,0,0.6)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,0,85,0.2)', borderLeft: '4px solid #ff0055' }}>
+                <div style={{ color: '#A3B3C4', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px' }}>{t.thermal_raw}</div>
+                <div style={{ color: '#ff0055', fontFamily: 'Roboto Mono, monospace', fontSize: '0.95rem', fontWeight: 700, margin: 0 }}>{t.excess_heat}</div>
               </div>
-              <div style={{ backgroundColor: 'rgba(34,197,94,0.1)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(34,197,94,0.4)', borderLeft: '4px solid #22c55e', transition: 'all 0.5s', transform: testState === 'done' ? 'scale(1.02)' : 'scale(1)', boxShadow: testState === 'done' ? '0 0 20px rgba(34,197,94,0.2)' : 'none' }}>
-                <div style={{ color: '#A3B3C4', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px' }}>With TZANiX AI</div>
+              <div style={{ backgroundColor: 'rgba(34,197,94,0.15)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(34,197,94,0.4)', borderLeft: '4px solid #22c55e', transition: 'all 0.5s', transform: testState === 'done' ? 'scale(1.02)' : 'scale(1)', boxShadow: testState === 'done' ? '0 0 20px rgba(34,197,94,0.2)' : 'none' }}>
+                <div style={{ color: '#A3B3C4', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px' }}>{t.with_tzanix}</div>
                 <div style={{ color: '#4ade80', fontFamily: 'Roboto Mono, monospace', fontSize: '0.95rem', fontWeight: 'bold', margin: 0, textShadow: '0 0 10px rgba(34,197,94,0.4)' }}>
-                    {testState === 'done' ? '-99.48% Heat Dissipation' : '-42% Heat Dissipation'}
+                    {testState === 'done' ? t.heat_dissip_done : t.heat_dissip}
                 </div>
               </div>
             </div>
             
             <div style={{ marginTop: '25px', fontSize: '0.85rem', color: '#A3B3C4', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '20px', lineHeight: '1.6' }}>
-              By preventing the neural network from processing useless vectors, the native engine directly mitigates massive thermal waste from GPUs, achieving Zero-Carbon training compliance.
+              {t.eco_desc}
             </div>
           </div>
         </div>
 
       </main>
-      <style dangerouslySetInnerHTML={{__html: `
+      <style dangerouslySetInnerHTML={{__html: \`
         @keyframes blink {
             0% { opacity: 1; }
             50% { opacity: 0; }
             100% { opacity: 1; }
         }
-      `}} />
+      \`}} />
     </div>
   );
 }
