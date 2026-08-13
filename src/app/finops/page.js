@@ -91,16 +91,11 @@ const i18n = {
   }
 };
 
-// --- TESSERACT 4D MATH ---
+// --- MATH UTILS ---
 const generateTesseractVertices = () => {
   const v = [];
   for(let i=0; i<16; i++) {
-    v.push([
-      (i & 1) ? 1 : -1,
-      (i & 2) ? 1 : -1,
-      (i & 4) ? 1 : -1,
-      (i & 8) ? 1 : -1
-    ]);
+    v.push([ (i & 1) ? 1 : -1, (i & 2) ? 1 : -1, (i & 4) ? 1 : -1, (i & 8) ? 1 : -1 ]);
   }
   return v;
 };
@@ -120,7 +115,25 @@ const generateTesseractEdges = () => {
   return edges;
 };
 
-function DataPurificationHologram({ isTesting, results, lang }) {
+const draw3DLine = (ctx, p1, p2) => {
+  ctx.beginPath();
+  ctx.moveTo(p1.px, p1.py);
+  ctx.lineTo(p2.px, p2.py);
+  ctx.stroke();
+};
+
+const project3D = (x, y, z, cx, cy, rotX, rotY, fov = 600) => {
+  let x1 = x * Math.cos(rotY) - z * Math.sin(rotY);
+  let z1 = x * Math.sin(rotY) + z * Math.cos(rotY);
+  let y1 = y;
+  let y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
+  let z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
+
+  const scale = fov / (fov + z2);
+  return { px: cx + x1 * scale, py: cy + y2 * scale, z: z2, scale };
+};
+
+function DataPurificationHologram({ isTesting, results, lang, viewMode }) {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
 
@@ -141,24 +154,39 @@ function DataPurificationHologram({ isTesting, results, lang }) {
     let animId;
     let time = 0;
 
-    // Initialize 4D Math structures
+    // --- Tesseract Config ---
     const tVertices = generateTesseractVertices();
     const tEdges = generateTesseractEdges();
-
     const particles = [];
-    const numParticles = 250; // Optimized for 60FPS
-    
-    for (let i = 0; i < numParticles; i++) {
+    for (let i = 0; i < 200; i++) {
       particles.push({
-        idx: i,
-        x: -400 - Math.random() * 200,
-        y: (Math.random() - 0.5) * 300,
-        z: (Math.random() - 0.5) * 300,
-        speed: 1.5 + Math.random() * 2.0,
-        state: 'noisy',
-        phase: Math.random() * Math.PI * 2
+        idx: i, x: -400 - Math.random() * 200, y: (Math.random() - 0.5) * 300, z: (Math.random() - 0.5) * 300,
+        speed: 1.5 + Math.random() * 2.0, state: 'noisy', phase: Math.random() * Math.PI * 2
       });
     }
+
+    // --- Octree Config ---
+    const voxels = [];
+    const gridSize = 4; // 4x4x4 cube
+    const spacing = 35;
+    for (let x = -gridSize/2; x < gridSize/2; x++) {
+      for (let y = -gridSize/2; y < gridSize/2; y++) {
+        for (let z = -gridSize/2; z < gridSize/2; z++) {
+          voxels.push({
+            origX: x * spacing + spacing/2, origY: y * spacing + spacing/2, origZ: z * spacing + spacing/2,
+            currX: x * spacing + spacing/2, currY: y * spacing + spacing/2, currZ: z * spacing + spacing/2,
+            isCorrupt: Math.random() > 0.85,
+            falling: false,
+            vy: 0
+          });
+        }
+      }
+    }
+
+    // --- Tensor Mesh Config ---
+    const cols = 25;
+    const rows = 15;
+    const meshSpacing = 20;
 
     const t = i18n[lang];
 
@@ -172,226 +200,211 @@ function DataPurificationHologram({ isTesting, results, lang }) {
       ctx.globalCompositeOperation = 'source-over';
       ctx.fillStyle = '#05070a';
       ctx.fillRect(0, 0, width, height);
-
       ctx.globalCompositeOperation = 'lighter';
 
       const timeScale = isTesting ? 0.08 : 0.015;
       time += timeScale;
       const cx = width / 2;
       const cy = height / 2;
-
-      // 4D Rotation Angles
-      const angleXY = time * 0.5;
-      const angleZW = time * 0.8;
       
-      // 3D Camera Angles
       const rotY = Math.sin(time * 0.2) * 0.15 + (mouseRef.current.x * 0.3);
       const rotX = Math.cos(time * 0.15) * 0.1 + (mouseRef.current.y * -0.3);
 
-      const tesseractBaseSize = isTesting ? 80 + Math.sin(time*10)*5 : 70;
-
-      // --- RENDER 4D TESSERACT ---
       ctx.save();
-      ctx.translate(cx, cy);
-      
-      const projectedTVertices = [];
-      
-      for(let i=0; i<16; i++) {
-        let [x, y, z, w] = tVertices[i];
+
+      // ==========================================
+      // VIEW MODE: TESSERACT 4D
+      // ==========================================
+      if (viewMode === 'tesseract') {
+        const angleXY = time * 0.5;
+        const angleZW = time * 0.8;
+        const tBaseSize = isTesting ? 80 + Math.sin(time*10)*5 : 70;
+        const projectedTVertices = [];
         
-        // 4D Rotation (XY plane)
-        let nx = x * Math.cos(angleXY) - y * Math.sin(angleXY);
-        let ny = x * Math.sin(angleXY) + y * Math.cos(angleXY);
-        x = nx; y = ny;
-        
-        // 4D Rotation (ZW plane)
-        let nz = z * Math.cos(angleZW) - w * Math.sin(angleZW);
-        let nw = z * Math.sin(angleZW) + w * Math.cos(angleZW);
-        z = nz; w = nw;
-        
-        // 4D to 3D Stereographic Projection
-        const distance = 2.5; // distance from 4D light source
-        const wRatio = 1.0 / (distance - w);
-        x *= wRatio * tesseractBaseSize;
-        y *= wRatio * tesseractBaseSize;
-        z *= wRatio * tesseractBaseSize;
-        
-        // 3D Rotation (Camera)
-        let x1 = x * Math.cos(rotY) - z * Math.sin(rotY);
-        let z1 = x * Math.sin(rotY) + z * Math.cos(rotY);
-        let y1 = y;
-        let y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
-        let z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
-
-        // 3D to 2D Projection
-        const fov = 600;
-        const scale = fov / (fov + z2);
-        
-        projectedTVertices.push({ px: x1 * scale, py: y2 * scale, z: z2, scale });
-      }
-
-      // Draw Tesseract Edges
-      ctx.beginPath();
-      for(let i=0; i<tEdges.length; i++) {
-        const [a, b] = tEdges[i];
-        const pA = projectedTVertices[a];
-        const pB = projectedTVertices[b];
-        ctx.moveTo(pA.px, pA.py);
-        ctx.lineTo(pB.px, pB.py);
-      }
-      ctx.strokeStyle = `rgba(0, 229, 255, ${isTesting ? 0.8 : 0.3})`;
-      ctx.lineWidth = isTesting ? 2 : 1;
-      ctx.stroke();
-
-      // Draw Tesseract Nodes
-      for(let i=0; i<16; i++) {
-        const p = projectedTVertices[i];
-        ctx.beginPath();
-        ctx.arc(p.px, p.py, 3 * p.scale, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(0, 255, 255, ${0.8 * p.scale})`;
-        ctx.fill();
-        // Fake bloom
-        ctx.beginPath();
-        ctx.arc(p.px, p.py, 10 * p.scale, 0, Math.PI*2);
-        ctx.fillStyle = `rgba(0, 255, 255, ${0.2 * p.scale})`;
-        ctx.fill();
-      }
-      ctx.restore();
-
-
-      // --- PARTICLES ---
-      const particleSpeedScale = isTesting ? 4.5 : 1.0;
-      const projectedParticles = [];
-
-      for (let i = 0; i < particles.length; i++) {
-        let p = particles[i];
-        const isPoison = i % 10 === 0; // ~10% poison for visual effect
-
-        p.x += p.speed * particleSpeedScale;
-        
-        if (p.x < -80) {
-          // Approaching Tesseract (Chaotic Ingestion)
-          p.state = 'noisy';
-          p.y += Math.sin(time * 3 + p.phase) * 1.5 * particleSpeedScale;
-          p.z += Math.cos(time * 2 + p.phase) * 1.5 * particleSpeedScale;
-        } 
-        else if (p.x >= -80 && p.x <= 80) {
-          // Inside/Hitting Tesseract
-          if ((results || isTesting) && isPoison) {
-             p.state = 'quarantine';
-             // Violent deflection down to Quarantine Zone
-             p.y += (180 - p.y) * 0.15 * particleSpeedScale;
-             // Slow down X axis to trap them
-             p.x += (-50 - p.x) * 0.05 * particleSpeedScale;
-          } else {
-             p.state = 'filtering';
-             // Pulled strongly to absolute mathematical center (0,0,0)
-             p.y += (0 - p.y) * 0.2 * particleSpeedScale;
-             p.z += (0 - p.z) * 0.2 * particleSpeedScale;
-          }
-        } 
-        else {
-          // Exiting Tesseract
-          if (p.state === 'quarantine') {
-            // Drop further into abyss
-            p.y += 2 * particleSpeedScale;
-            p.x += (0 - p.x) * 0.05 * particleSpeedScale;
-          } else {
-             p.state = 'pure';
-             // Perfect linear beam, absolute zero deviation
-             p.y += (0 - p.y) * 0.3 * particleSpeedScale;
-             p.z += (0 - p.z) * 0.3 * particleSpeedScale;
-             p.x += 1.5 * particleSpeedScale;
-          }
+        for(let i=0; i<16; i++) {
+          let [x, y, z, w] = tVertices[i];
+          let nx = x * Math.cos(angleXY) - y * Math.sin(angleXY);
+          let ny = x * Math.sin(angleXY) + y * Math.cos(angleXY);
+          x = nx; y = ny;
+          let nz = z * Math.cos(angleZW) - w * Math.sin(angleZW);
+          let nw = z * Math.sin(angleZW) + w * Math.cos(angleZW);
+          z = nz; w = nw;
+          const wRatio = 1.0 / (2.5 - w);
+          projectedTVertices.push(project3D(x * wRatio * tBaseSize, y * wRatio * tBaseSize, z * wRatio * tBaseSize, cx, cy, rotX, rotY));
         }
 
-        // Loop Boundaries
-        if (p.x > 400 || p.y > 350) {
-          p.x = -400 - Math.random() * 100;
-          p.y = (Math.random() - 0.5) * 300;
-          p.z = (Math.random() - 0.5) * 300;
-          p.state = 'noisy';
+        ctx.beginPath();
+        for(let i=0; i<tEdges.length; i++) {
+          ctx.moveTo(projectedTVertices[tEdges[i][0]].px, projectedTVertices[tEdges[i][0]].py);
+          ctx.lineTo(projectedTVertices[tEdges[i][1]].px, projectedTVertices[tEdges[i][1]].py);
+        }
+        ctx.strokeStyle = `rgba(0, 229, 255, ${isTesting ? 0.8 : 0.3})`;
+        ctx.lineWidth = isTesting ? 2 : 1;
+        ctx.stroke();
+
+        const projectedParticles = [];
+        for (let i = 0; i < particles.length; i++) {
+          let p = particles[i];
+          const isPoison = i % 10 === 0; 
+          p.x += p.speed * (isTesting ? 4.5 : 1.0);
+          if (p.x < -80) {
+            p.state = 'noisy'; p.y += Math.sin(time * 3 + p.phase) * 1.5; p.z += Math.cos(time * 2 + p.phase) * 1.5;
+          } else if (p.x >= -80 && p.x <= 80) {
+            if ((results || isTesting) && isPoison) {
+               p.state = 'quarantine'; p.y += (180 - p.y) * 0.15; p.x += (-50 - p.x) * 0.05;
+            } else {
+               p.state = 'filtering'; p.y += (0 - p.y) * 0.2; p.z += (0 - p.z) * 0.2;
+            }
+          } else {
+            if (p.state === 'quarantine') { p.y += 2; p.x += (0 - p.x) * 0.05; } 
+            else { p.state = 'pure'; p.y += (0 - p.y) * 0.3; p.z += (0 - p.z) * 0.3; p.x += 1.5; }
+          }
+          if (p.x > 400 || p.y > 350) {
+            p.x = -400 - Math.random() * 100; p.y = (Math.random() - 0.5) * 300; p.z = (Math.random() - 0.5) * 300; p.state = 'noisy';
+          }
+          const proj = project3D(p.x, p.y, p.z, cx, cy, rotX, rotY);
+          projectedParticles.push({ ...proj, state: p.state, shiftX: p.state === 'noisy' ? 2 * proj.scale : 0 });
         }
 
-        // 3D Camera Projection for Particles
-        let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
-        let z1 = p.x * Math.sin(rotY) + p.z * Math.cos(rotY);
-        let y1 = p.y;
-        let y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
-        let z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
-
-        const fov = 600;
-        const scale = fov / (fov + z2);
-        const shiftX = (p.state === 'noisy') ? 2 * scale : 0;
-
-        projectedParticles.push({ 
-          idx: i, x: cx + x1 * scale, y: cy + y2 * scale, 
-          z: z2, scale, state: p.state, shiftX, origY: p.y, origZ: p.z 
-        });
-      }
-
-      projectedParticles.sort((a, b) => b.z - a.z);
-
-      // Draw Particles
-      for (let i = 0; i < projectedParticles.length; i++) {
-        const p1 = projectedParticles[i];
-        const depthAlpha = Math.max(0.1, 1.0 - (p1.z + 300) / 600);
+        projectedParticles.sort((a, b) => b.z - a.z);
+        for (let i = 0; i < projectedParticles.length; i++) {
+          const p1 = projectedParticles[i];
+          const alpha = Math.max(0.1, 1.0 - (p1.z + 300) / 600);
+          const r = Math.max(0.1, (p1.state === 'filtering' ? 3.0 : 1.5) * p1.scale);
+          
+          if (p1.state === 'noisy') {
+            ctx.fillStyle = `rgba(0, 255, 255, ${alpha * 0.6})`; ctx.beginPath(); ctx.arc(p1.px - p1.shiftX, p1.py, r, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = `rgba(255, 0, 85, ${alpha})`; ctx.beginPath(); ctx.arc(p1.px + p1.shiftX, p1.py, r, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = `rgba(255, 0, 85, ${alpha * 0.2})`; ctx.beginPath(); ctx.arc(p1.px, p1.py, r * 4, 0, Math.PI*2); ctx.fill();
+          } else if (p1.state === 'quarantine') {
+            ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`; ctx.beginPath(); ctx.arc(p1.px, p1.py, r * 1.5, 0, Math.PI*2); ctx.fill();
+          } else if (p1.state === 'pure') {
+            ctx.fillStyle = `rgba(0, 255, 255, ${alpha})`; ctx.beginPath(); ctx.arc(p1.px, p1.py, r, 0, Math.PI*2); ctx.fill();
+          } else {
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`; ctx.beginPath(); ctx.arc(p1.px, p1.py, r * 2, 0, Math.PI*2); ctx.fill();
+          }
+        }
+      } 
+      // ==========================================
+      // VIEW MODE: MORTON OCTREE (VOXEL GRID)
+      // ==========================================
+      else if (viewMode === 'octree') {
+        const rx = rotX + 0.3; // Tilt down to see grid better
+        const ry = rotY + time * 0.2;
         
-        // Connections
-        for (let j = i + 1; j < Math.min(i + 15, projectedParticles.length); j++) {
-          const p2 = projectedParticles[j];
-          if (p1.state === p2.state) {
-            const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
-            
-            if (p1.state === 'noisy' && dist < 45 * p1.scale) {
-              ctx.strokeStyle = `rgba(255, 0, 85, ${0.3 * (1 - dist/(45*p1.scale)) * depthAlpha})`;
-              ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-            } else if (p1.state === 'pure' && dist < 80 * p1.scale) {
-              // Only connect pure beam if closely aligned
-              if (Math.abs(p1.origY - p2.origY) < 2) {
-                ctx.strokeStyle = `rgba(0, 229, 255, ${0.5 * (1 - dist/(80*p1.scale)) * depthAlpha})`;
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-              }
+        const scanWave = Math.sin(time * 2) * 50; // Scan passing through
+
+        const projectedVoxels = voxels.map(v => {
+          // Physics
+          if (isTesting && v.isCorrupt && !v.falling) {
+            // Check if scan wave hits it
+            if (v.currY < scanWave && v.currY > scanWave - 20) v.falling = true;
+          }
+          if (v.falling) {
+            v.vy += 0.5; // Gravity
+            v.currY += v.vy;
+            v.currX += (Math.random()-0.5)*2;
+            if (v.currY > 300) { // Respawn
+               v.currY = v.origY; v.currX = v.origX; v.currZ = v.origZ; v.vy = 0; v.falling = false;
+               v.isCorrupt = Math.random() > 0.85; // new corruption
             }
           }
-        }
 
-        const radius = Math.max(0.1, (p1.state === 'filtering' ? 3.0 : 1.5) * p1.scale);
-        
-        if (p1.state === 'noisy') {
-          // Aberration
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.6})`;
-          ctx.beginPath(); ctx.arc(p1.x - p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
+          const proj = project3D(v.currX, v.currY, v.currZ, cx, cy, rx, ry);
+          return { ...proj, v };
+        });
+
+        projectedVoxels.sort((a, b) => b.z - a.z);
+
+        for (let i=0; i<projectedVoxels.length; i++) {
+          const p = projectedVoxels[i];
+          const alpha = Math.max(0.1, 1.0 - (p.z + 100) / 300);
           
-          ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha})`;
-          ctx.beginPath(); ctx.arc(p1.x + p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
+          const s = (spacing * 0.8 / 2) * p.scale;
           
-          ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha * 0.2})`;
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
-        } 
-        else if (p1.state === 'quarantine') {
-          ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha})`;
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha * 0.3})`;
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 6, 0, Math.PI*2); ctx.fill();
-        } 
-        else if (p1.state === 'pure') {
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha})`;
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.2})`;
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
-        } 
-        else { // Filtering (White Hot)
-          ctx.fillStyle = `rgba(255, 255, 255, ${depthAlpha})`;
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 2, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.5})`;
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 6, 0, Math.PI*2); ctx.fill();
+          if (p.v.falling || p.v.isCorrupt) {
+            ctx.fillStyle = `rgba(255, 0, 85, ${alpha * 0.5})`;
+            ctx.strokeStyle = `rgba(255, 0, 85, ${alpha})`;
+          } else {
+            // Flash bright if scanline passes
+            const isScanning = Math.abs(p.v.origY - scanWave) < 15;
+            ctx.fillStyle = isScanning ? `rgba(0, 255, 255, ${alpha * 0.8})` : `rgba(0, 255, 255, ${alpha * 0.15})`;
+            ctx.strokeStyle = `rgba(0, 255, 255, ${isScanning ? alpha : alpha * 0.4})`;
+          }
+
+          // Draw simple 3D cube projection (front face and back face outline)
+          ctx.beginPath();
+          ctx.rect(p.px - s, p.py - s, s*2, s*2);
+          ctx.fill();
+          ctx.stroke();
         }
       }
+      // ==========================================
+      // VIEW MODE: TENSOR MESH FUNNEL
+      // ==========================================
+      else if (viewMode === 'mesh') {
+        const rx = rotX + 0.6; // Top down view
+        const scanlineX = (time % Math.PI) / Math.PI * (cols * meshSpacing) - (cols * meshSpacing / 2);
+        
+        const projectedMesh = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            let x = c * meshSpacing - (cols * meshSpacing) / 2;
+            let z = r * meshSpacing - (rows * meshSpacing) / 2;
+            let y = 0;
+            
+            // Noise spikes on the left side of the laser
+            if (x > scanlineX) {
+              const noise = Math.sin(x*0.1 + time*5) * Math.cos(z*0.1 + time*3) * 60;
+              y = (isTesting ? noise : noise * 0.2); 
+            }
+            
+            projectedMesh.push({ ...project3D(x, y, z, cx, cy, rx, rotY), r, c, x, y });
+          }
+        }
+        
+        // Draw Mesh grid lines
+        for (let i = 0; i < projectedMesh.length; i++) {
+          const p = projectedMesh[i];
+          const alpha = Math.max(0.1, 1.0 - (p.z + 200) / 400);
+          
+          if (p.x > scanlineX) { // Noisy side (Red)
+            ctx.strokeStyle = `rgba(255, 0, 85, ${alpha * 0.6})`;
+          } else { // Purified side (Cyan)
+            ctx.strokeStyle = `rgba(0, 255, 255, ${alpha * 0.6})`;
+          }
+          
+          ctx.lineWidth = 1;
+          
+          // Connect to right
+          if (p.c < cols - 1) {
+            const right = projectedMesh[i + 1];
+            draw3DLine(ctx, p, right);
+          }
+          // Connect to down
+          if (p.r < rows - 1) {
+            const down = projectedMesh[i + cols];
+            draw3DLine(ctx, p, down);
+          }
+        }
 
+        // Draw the sweeping laser
+        const pTop = project3D(scanlineX, 0, -rows*meshSpacing/2, cx, cy, rx, rotY);
+        const pBot = project3D(scanlineX, 0, rows*meshSpacing/2, cx, cy, rx, rotY);
+        ctx.strokeStyle = 'rgba(0, 255, 255, 1)';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(pTop.px, pTop.py); ctx.lineTo(pBot.px, pBot.py); ctx.stroke();
+        // Laser Bloom
+        ctx.strokeStyle = 'rgba(0, 255, 255, 0.3)';
+        ctx.lineWidth = 15;
+        ctx.beginPath(); ctx.moveTo(pTop.px, pTop.py); ctx.lineTo(pBot.px, pBot.py); ctx.stroke();
+      }
+
+      ctx.restore();
+
+      // UI OVERLAYS
       ctx.globalCompositeOperation = 'source-over';
       
-      // Quarantine Box
       if (results || isTesting) {
         ctx.save();
         ctx.translate(cx, cy);
@@ -399,7 +412,6 @@ function DataPurificationHologram({ isTesting, results, lang }) {
         ctx.strokeStyle = `rgba(255, 0, 85, ${flashOpacity})`;
         ctx.beginPath(); ctx.rect(-80, 150, 160, 60); ctx.stroke();
         ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity * 0.1})`; ctx.fill();
-        
         ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity})`;
         ctx.font = "bold 10px 'Roboto Mono', monospace";
         ctx.textAlign = "center";
@@ -422,13 +434,14 @@ function DataPurificationHologram({ isTesting, results, lang }) {
     draw();
 
     return () => cancelAnimationFrame(animId);
-  }, [isTesting, results, lang]);
+  }, [isTesting, results, lang, viewMode]);
 
   return <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />;
 }
 
 export default function FinOpsDashboard() {
   const [lang, setLang] = useState('en'); 
+  const [viewMode, setViewMode] = useState('tesseract'); // tesseract, octree, mesh
   
   const [vectorSavings, setVectorSavings] = useState(0);
   const [co2Saved, setCo2Saved] = useState(0);
@@ -541,15 +554,16 @@ export default function FinOpsDashboard() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          {/* ARCHITECTURE TOGGLE */}
           <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '3px', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <button 
-              onClick={() => setLang('en')}
-              style={{ background: lang === 'en' ? 'rgba(0,229,255,0.2)' : 'transparent', color: lang === 'en' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}
-            >EN</button>
-            <button 
-              onClick={() => setLang('es')}
-              style={{ background: lang === 'es' ? 'rgba(0,229,255,0.2)' : 'transparent', color: lang === 'es' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}
-            >ES</button>
+            <button onClick={() => setViewMode('tesseract')} style={{ background: viewMode === 'tesseract' ? 'rgba(0,229,255,0.2)' : 'transparent', color: viewMode === 'tesseract' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.70rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}>TESSERACT</button>
+            <button onClick={() => setViewMode('octree')} style={{ background: viewMode === 'octree' ? 'rgba(0,229,255,0.2)' : 'transparent', color: viewMode === 'octree' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.70rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}>OCTREE</button>
+            <button onClick={() => setViewMode('mesh')} style={{ background: viewMode === 'mesh' ? 'rgba(0,229,255,0.2)' : 'transparent', color: viewMode === 'mesh' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.70rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}>TENSOR MESH</button>
+          </div>
+
+          <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '3px', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <button onClick={() => setLang('en')} style={{ background: lang === 'en' ? 'rgba(0,229,255,0.2)' : 'transparent', color: lang === 'en' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}>EN</button>
+            <button onClick={() => setLang('es')} style={{ background: lang === 'es' ? 'rgba(0,229,255,0.2)' : 'transparent', color: lang === 'es' ? '#00e5ff' : '#666', border: 'none', padding: '4px 12px', borderRadius: '16px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', transition: 'all 0.3s' }}>ES</button>
           </div>
 
           <Link href="/" style={{ padding: '10px 20px', border: '1px solid rgba(0,229,255,0.3)', borderRadius: '8px', backgroundColor: 'rgba(0,229,255,0.05)', color: '#00E5FF', textDecoration: 'none', fontSize: '0.85rem', fontFamily: 'Roboto Mono, monospace', fontWeight: 600, transition: 'all 0.3s', boxShadow: 'inset 0 0 10px rgba(0,229,255,0.05)' }}>
@@ -561,7 +575,7 @@ export default function FinOpsDashboard() {
       <main style={{ flex: 1, position: 'relative', display: 'grid', gridTemplateColumns: '380px 1fr 380px', padding: '30px 40px', gap: '40px', height: 'calc(100vh - 75px)', overflow: 'hidden' }}>
         
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'auto' }}>
-          <DataPurificationHologram isTesting={testState === 'testing'} results={testResults} lang={lang} />
+          <DataPurificationHologram isTesting={testState === 'testing'} results={testResults} lang={lang} viewMode={viewMode} />
         </div>
 
         <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', gap: '25px', height: '100%', overflowY: 'auto', pointerEvents: 'none' }}>
