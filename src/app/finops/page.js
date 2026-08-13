@@ -91,6 +91,35 @@ const i18n = {
   }
 };
 
+// --- TESSERACT 4D MATH ---
+const generateTesseractVertices = () => {
+  const v = [];
+  for(let i=0; i<16; i++) {
+    v.push([
+      (i & 1) ? 1 : -1,
+      (i & 2) ? 1 : -1,
+      (i & 4) ? 1 : -1,
+      (i & 8) ? 1 : -1
+    ]);
+  }
+  return v;
+};
+
+const generateTesseractEdges = () => {
+  const edges = [];
+  for(let i=0; i<16; i++) {
+    for(let j=i+1; j<16; j++) {
+      let diffCount = 0;
+      if((i & 1) !== (j & 1)) diffCount++;
+      if((i & 2) !== (j & 2)) diffCount++;
+      if((i & 4) !== (j & 4)) diffCount++;
+      if((i & 8) !== (j & 8)) diffCount++;
+      if(diffCount === 1) edges.push([i, j]);
+    }
+  }
+  return edges;
+};
+
 function DataPurificationHologram({ isTesting, results, lang }) {
   const canvasRef = useRef(null);
   const mouseRef = useRef({ x: 0, y: 0, targetX: 0, targetY: 0 });
@@ -112,199 +141,254 @@ function DataPurificationHologram({ isTesting, results, lang }) {
     let animId;
     let time = 0;
 
+    // Initialize 4D Math structures
+    const tVertices = generateTesseractVertices();
+    const tEdges = generateTesseractEdges();
+
     const particles = [];
     const numParticles = 250; // Optimized for 60FPS
     
     for (let i = 0; i < numParticles; i++) {
       particles.push({
         idx: i,
-        x: -400 + Math.random() * 200,
-        y: (Math.random() - 0.5) * 350,
-        z: (Math.random() - 0.5) * 350,
-        speed: 1.0 + Math.random() * 2.0,
+        x: -400 - Math.random() * 200,
+        y: (Math.random() - 0.5) * 300,
+        z: (Math.random() - 0.5) * 300,
+        speed: 1.5 + Math.random() * 2.0,
         state: 'noisy',
         phase: Math.random() * Math.PI * 2
       });
     }
 
-    const t = i18n[lang]; // Obtener textos del canvas
+    const t = i18n[lang];
 
     const draw = () => {
       const width = canvas.width = canvas.parentElement.clientWidth;
       const height = canvas.height = canvas.parentElement.clientHeight;
       
-      // Interpolate mouse for smooth parallax
       mouseRef.current.x += (mouseRef.current.targetX - mouseRef.current.x) * 0.05;
       mouseRef.current.y += (mouseRef.current.targetY - mouseRef.current.y) * 0.05;
 
-      // Dark background for pure additive blending
       ctx.globalCompositeOperation = 'source-over';
-      ctx.fillStyle = '#05070a'; // Solid dark
+      ctx.fillStyle = '#05070a';
       ctx.fillRect(0, 0, width, height);
 
-      // ADDITIVE BLENDING: The secret to pure laser light
       ctx.globalCompositeOperation = 'lighter';
 
-      const timeScale = isTesting ? 0.06 : 0.01;
+      const timeScale = isTesting ? 0.08 : 0.015;
       time += timeScale;
       const cx = width / 2;
       const cy = height / 2;
 
+      // 4D Rotation Angles
+      const angleXY = time * 0.5;
+      const angleZW = time * 0.8;
+      
+      // 3D Camera Angles
+      const rotY = Math.sin(time * 0.2) * 0.15 + (mouseRef.current.x * 0.3);
+      const rotX = Math.cos(time * 0.15) * 0.1 + (mouseRef.current.y * -0.3);
+
+      const tesseractBaseSize = isTesting ? 80 + Math.sin(time*10)*5 : 70;
+
+      // --- RENDER 4D TESSERACT ---
       ctx.save();
       ctx.translate(cx, cy);
       
-      // Central Energy Field (The Filter)
-      const rotRing = time * 0.5;
-      for (let r = 0; r < 3; r++) {
+      const projectedTVertices = [];
+      
+      for(let i=0; i<16; i++) {
+        let [x, y, z, w] = tVertices[i];
+        
+        // 4D Rotation (XY plane)
+        let nx = x * Math.cos(angleXY) - y * Math.sin(angleXY);
+        let ny = x * Math.sin(angleXY) + y * Math.cos(angleXY);
+        x = nx; y = ny;
+        
+        // 4D Rotation (ZW plane)
+        let nz = z * Math.cos(angleZW) - w * Math.sin(angleZW);
+        let nw = z * Math.sin(angleZW) + w * Math.cos(angleZW);
+        z = nz; w = nw;
+        
+        // 4D to 3D Stereographic Projection
+        const distance = 2.5; // distance from 4D light source
+        const wRatio = 1.0 / (distance - w);
+        x *= wRatio * tesseractBaseSize;
+        y *= wRatio * tesseractBaseSize;
+        z *= wRatio * tesseractBaseSize;
+        
+        // 3D Rotation (Camera)
+        let x1 = x * Math.cos(rotY) - z * Math.sin(rotY);
+        let z1 = x * Math.sin(rotY) + z * Math.cos(rotY);
+        let y1 = y;
+        let y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
+        let z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
+
+        // 3D to 2D Projection
+        const fov = 600;
+        const scale = fov / (fov + z2);
+        
+        projectedTVertices.push({ px: x1 * scale, py: y2 * scale, z: z2, scale });
+      }
+
+      // Draw Tesseract Edges
+      ctx.beginPath();
+      for(let i=0; i<tEdges.length; i++) {
+        const [a, b] = tEdges[i];
+        const pA = projectedTVertices[a];
+        const pB = projectedTVertices[b];
+        ctx.moveTo(pA.px, pA.py);
+        ctx.lineTo(pB.px, pB.py);
+      }
+      ctx.strokeStyle = \`rgba(0, 229, 255, \${isTesting ? 0.8 : 0.3})\`;
+      ctx.lineWidth = isTesting ? 2 : 1;
+      ctx.stroke();
+
+      // Draw Tesseract Nodes
+      for(let i=0; i<16; i++) {
+        const p = projectedTVertices[i];
         ctx.beginPath();
-        const stretchX = 20 + r * 15;
-        const stretchY = 160 + r * 30;
-        const pulse = isTesting ? Math.sin(time * 8 + r) * 15 : Math.sin(time * 2 + r) * 5;
-        
-        ctx.ellipse(0, 0, stretchX + pulse, stretchY + pulse, rotRing + (r * 0.8), 0, Math.PI * 2);
-        
-        // Cyan Glow (Optimized)
-        ctx.strokeStyle = `rgba(0, 229, 255, ${0.4 - r * 0.1})`;
-        ctx.lineWidth = isTesting ? 2 : 1;
-        ctx.stroke();
+        ctx.arc(p.px, p.py, 3 * p.scale, 0, Math.PI*2);
+        ctx.fillStyle = \`rgba(0, 255, 255, \${0.8 * p.scale})\`;
+        ctx.fill();
+        // Fake bloom
+        ctx.beginPath();
+        ctx.arc(p.px, p.py, 10 * p.scale, 0, Math.PI*2);
+        ctx.fillStyle = \`rgba(0, 255, 255, \${0.2 * p.scale})\`;
+        ctx.fill();
       }
       ctx.restore();
 
-      // Camera Parallax & Rotation
-      const rotY = Math.sin(time * 0.2) * 0.15 + (mouseRef.current.x * 0.3);
-      const rotX = Math.cos(time * 0.15) * 0.1 + (mouseRef.current.y * -0.3);
-      
-      const particleSpeedScale = isTesting ? 5.0 : 1.0;
-      const projected = [];
 
-      // PHYSICS & MAPPING
+      // --- PARTICLES ---
+      const particleSpeedScale = isTesting ? 4.5 : 1.0;
+      const projectedParticles = [];
+
       for (let i = 0; i < particles.length; i++) {
         let p = particles[i];
-        
+        const isPoison = i % 10 === 0; // ~10% poison for visual effect
+
         p.x += p.speed * particleSpeedScale;
         
-        if (p.x < -30) {
+        if (p.x < -80) {
+          // Approaching Tesseract (Chaotic Ingestion)
           p.state = 'noisy';
-          // Perlin-like chaos drift
           p.y += Math.sin(time * 3 + p.phase) * 1.5 * particleSpeedScale;
           p.z += Math.cos(time * 2 + p.phase) * 1.5 * particleSpeedScale;
-        } else if (p.x >= -30 && p.x <= 30) {
-          p.state = 'filtering';
-          // Sucked into the gateway
-          p.y += (0 - p.y) * 0.1 * particleSpeedScale;
-          p.z += (0 - p.z) * 0.1 * particleSpeedScale;
-        } else {
-          const isPoison = i % 12 === 0;
+        } 
+        else if (p.x >= -80 && p.x <= 80) {
+          // Inside/Hitting Tesseract
           if ((results || isTesting) && isPoison) {
              p.state = 'quarantine';
-             // Dropped to quarantine box
-             p.y += (220 - p.y) * 0.12 * particleSpeedScale;
-             p.x += (50 - p.x) * 0.05 * particleSpeedScale;
+             // Violent deflection down to Quarantine Zone
+             p.y += (180 - p.y) * 0.15 * particleSpeedScale;
+             // Slow down X axis to trap them
+             p.x += (-50 - p.x) * 0.05 * particleSpeedScale;
+          } else {
+             p.state = 'filtering';
+             // Pulled strongly to absolute mathematical center (0,0,0)
+             p.y += (0 - p.y) * 0.2 * particleSpeedScale;
+             p.z += (0 - p.z) * 0.2 * particleSpeedScale;
+          }
+        } 
+        else {
+          // Exiting Tesseract
+          if (p.state === 'quarantine') {
+            // Drop further into abyss
+            p.y += 2 * particleSpeedScale;
+            p.x += (0 - p.x) * 0.05 * particleSpeedScale;
           } else {
              p.state = 'pure';
-             // Tesseract Harmonic Grid alignment
-             p.y += (Math.round(p.y / 40) * 40 - p.y) * 0.15 * particleSpeedScale;
-             p.z += (Math.round(p.z / 40) * 40 - p.z) * 0.15 * particleSpeedScale;
-             p.x += 1.2 * particleSpeedScale;
+             // Perfect linear beam, absolute zero deviation
+             p.y += (0 - p.y) * 0.3 * particleSpeedScale;
+             p.z += (0 - p.z) * 0.3 * particleSpeedScale;
+             p.x += 1.5 * particleSpeedScale;
           }
         }
 
-        // Respawn
+        // Loop Boundaries
         if (p.x > 400 || p.y > 350) {
           p.x = -400 - Math.random() * 100;
-          p.y = (Math.random() - 0.5) * 350;
-          p.z = (Math.random() - 0.5) * 350;
+          p.y = (Math.random() - 0.5) * 300;
+          p.z = (Math.random() - 0.5) * 300;
+          p.state = 'noisy';
         }
 
-        // 3D Projection Engine
+        // 3D Camera Projection for Particles
         let x1 = p.x * Math.cos(rotY) - p.z * Math.sin(rotY);
         let z1 = p.x * Math.sin(rotY) + p.z * Math.cos(rotY);
         let y1 = p.y;
         let y2 = y1 * Math.cos(rotX) - z1 * Math.sin(rotX);
         let z2 = y1 * Math.sin(rotX) + z1 * Math.cos(rotX);
 
-        // Depth of Field (Z-Index scaling)
         const fov = 600;
         const scale = fov / (fov + z2);
-        
-        // Chromatic Aberration Shift (Simulate Anaglyph 3D)
         const shiftX = (p.state === 'noisy') ? 2 * scale : 0;
 
-        const px = cx + (x1 * scale);
-        const py = cy + (y2 * scale);
-
-        projected.push({ 
-          idx: i, x: px, y: py, z: z2, scale, state: p.state, shiftX,
-          origY: p.y, origZ: p.z 
+        projectedParticles.push({ 
+          idx: i, x: cx + x1 * scale, y: cy + y2 * scale, 
+          z: z2, scale, state: p.state, shiftX, origY: p.y, origZ: p.z 
         });
       }
 
-      // Sort back-to-front (Painter's Algorithm)
-      projected.sort((a, b) => b.z - a.z);
+      projectedParticles.sort((a, b) => b.z - a.z);
 
-      // DRAW PARTICLES & CONSTELLATIONS
-      for (let i = 0; i < projected.length; i++) {
-        const p1 = projected[i];
-        
-        // Depth Fading (Distant particles are dark)
+      // Draw Particles
+      for (let i = 0; i < projectedParticles.length; i++) {
+        const p1 = projectedParticles[i];
         const depthAlpha = Math.max(0.1, 1.0 - (p1.z + 300) / 600);
         
-        // Connections (Web Proximity Algorithm)
-        for (let j = i + 1; j < Math.min(i + 20, projected.length); j++) {
-          const p2 = projected[j];
+        // Connections
+        for (let j = i + 1; j < Math.min(i + 15, projectedParticles.length); j++) {
+          const p2 = projectedParticles[j];
           if (p1.state === p2.state) {
             const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
             
-            if (p1.state === 'noisy' && dist < 40 * p1.scale) {
-              // Red Web
-              ctx.strokeStyle = `rgba(255, 0, 85, ${0.4 * (1 - dist/(40*p1.scale)) * depthAlpha})`;
-              ctx.lineWidth = 1;
+            if (p1.state === 'noisy' && dist < 45 * p1.scale) {
+              ctx.strokeStyle = \`rgba(255, 0, 85, \${0.3 * (1 - dist/(45*p1.scale)) * depthAlpha})\`;
               ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-            } else if (p1.state === 'pure' && dist < 65 * p1.scale) {
-              // Cyan Laser Grid (Only connect if on same harmonic row/col)
-              if (Math.abs(p1.origY - p2.origY) < 5 || Math.abs(p1.origZ - p2.origZ) < 5) {
-                ctx.strokeStyle = `rgba(0, 229, 255, ${0.6 * (1 - dist/(65*p1.scale)) * depthAlpha})`;
-                ctx.lineWidth = 1.5;
+            } else if (p1.state === 'pure' && dist < 80 * p1.scale) {
+              // Only connect pure beam if closely aligned
+              if (Math.abs(p1.origY - p2.origY) < 2) {
+                ctx.strokeStyle = \`rgba(0, 229, 255, \${0.5 * (1 - dist/(80*p1.scale)) * depthAlpha})\`;
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
               }
             }
           }
         }
 
-        // Draw Nodes with Bloom (Optimized without shadowBlur)
         const radius = Math.max(0.1, (p1.state === 'filtering' ? 3.0 : 1.5) * p1.scale);
         
         if (p1.state === 'noisy') {
-          // Aberration: Draw Cyan channel slightly offset, then Red channel
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.6})`;
+          // Aberration
+          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha * 0.6})\`;
           ctx.beginPath(); ctx.arc(p1.x - p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
           
-          ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha})`;
+          ctx.fillStyle = \`rgba(255, 0, 85, \${depthAlpha})\`;
           ctx.beginPath(); ctx.arc(p1.x + p1.shiftX, p1.y, radius, 0, Math.PI*2); ctx.fill();
           
-          // Simulated Bloom
-          ctx.fillStyle = `rgba(255, 0, 85, ${depthAlpha * 0.2})`;
+          ctx.fillStyle = \`rgba(255, 0, 85, \${depthAlpha * 0.2})\`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
         } 
         else if (p1.state === 'quarantine') {
-          ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha})`;
+          ctx.fillStyle = \`rgba(255, 0, 0, \${depthAlpha})\`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = `rgba(255, 0, 0, ${depthAlpha * 0.3})`;
+          ctx.fillStyle = \`rgba(255, 0, 0, \${depthAlpha * 0.3})\`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 6, 0, Math.PI*2); ctx.fill();
         } 
         else if (p1.state === 'pure') {
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha})`;
+          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha})\`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = `rgba(0, 255, 255, ${depthAlpha * 0.2})`;
+          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha * 0.2})\`;
           ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 4, 0, Math.PI*2); ctx.fill();
         } 
-        else { // Filtering
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 1.5, 0, Math.PI*2); ctx.fill();
+        else { // Filtering (White Hot)
+          ctx.fillStyle = \`rgba(255, 255, 255, \${depthAlpha})\`;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 2, 0, Math.PI*2); ctx.fill();
+          ctx.fillStyle = \`rgba(0, 255, 255, \${depthAlpha * 0.5})\`;
+          ctx.beginPath(); ctx.arc(p1.x, p1.y, radius * 6, 0, Math.PI*2); ctx.fill();
         }
       }
 
-      // UI OVERLAYS
       ctx.globalCompositeOperation = 'source-over';
       
       // Quarantine Box
@@ -312,32 +396,25 @@ function DataPurificationHologram({ isTesting, results, lang }) {
         ctx.save();
         ctx.translate(cx, cy);
         const flashOpacity = isTesting ? Math.abs(Math.sin(time * 10)) * 0.8 + 0.2 : 0.6;
-        ctx.strokeStyle = `rgba(255, 0, 85, ${flashOpacity})`;
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = \`rgba(255, 0, 85, \${flashOpacity})\`;
+        ctx.beginPath(); ctx.rect(-80, 150, 160, 60); ctx.stroke();
+        ctx.fillStyle = \`rgba(255, 0, 85, \${flashOpacity * 0.1})\`; ctx.fill();
         
-        ctx.beginPath();
-        ctx.rect(-100, 190, 200, 60);
-        ctx.stroke();
-        
-        ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity * 0.1})`;
-        ctx.fill();
-
-        ctx.fillStyle = `rgba(255, 0, 85, ${flashOpacity})`;
+        ctx.fillStyle = \`rgba(255, 0, 85, \${flashOpacity})\`;
         ctx.font = "bold 10px 'Roboto Mono', monospace";
         ctx.textAlign = "center";
-        ctx.fillText(t.hologram_quarantine, 0, 215);
+        ctx.fillText(t.hologram_quarantine, 0, 185);
         ctx.restore();
       }
 
-      // Floating Texts
       ctx.fillStyle = "rgba(255, 0, 85, 0.9)";
       ctx.font = "bold 12px 'Roboto Mono', monospace";
       ctx.textAlign = "right";
-      ctx.fillText(t.hologram_raw, cx - 100, cy - 140);
+      ctx.fillText(t.hologram_raw, cx - 120, cy - 140);
       
       ctx.fillStyle = "rgba(0, 255, 255, 0.9)";
       ctx.textAlign = "left";
-      ctx.fillText(t.hologram_pure, cx + 100, cy - 140);
+      ctx.fillText(t.hologram_pure, cx + 120, cy - 140);
 
       animId = requestAnimationFrame(draw);
     };
@@ -351,7 +428,7 @@ function DataPurificationHologram({ isTesting, results, lang }) {
 }
 
 export default function FinOpsDashboard() {
-  const [lang, setLang] = useState('en'); // ES/EN Toggle State
+  const [lang, setLang] = useState('en'); 
   
   const [vectorSavings, setVectorSavings] = useState(0);
   const [co2Saved, setCo2Saved] = useState(0);
@@ -363,7 +440,7 @@ export default function FinOpsDashboard() {
   const [terminalLogs, setTerminalLogs] = useState([]);
   const [testResults, setTestResults] = useState(null);
 
-  const t = i18n[lang]; // Dictionary context
+  const t = i18n[lang];
 
   useEffect(() => {
     if (testState === 'testing') return;
@@ -452,7 +529,6 @@ export default function FinOpsDashboard() {
   return (
     <div style={{ backgroundColor: '#05070a', height: '100vh', width: '100vw', color: '#fff', fontFamily: 'Inter, sans-serif', overflow: 'hidden', position: 'relative', display: 'flex', flexDirection: 'column' }}>
       
-      {/* Premium Header */}
       <header style={{ borderBottom: '1px solid rgba(0, 229, 255, 0.15)', padding: '15px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 20, position: 'relative', background: 'rgba(5, 7, 10, 0.85)', backdropFilter: 'blur(12px)', flexShrink: 0, height: '75px', boxShadow: '0 4px 30px rgba(0, 0, 0, 0.5)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <h1 style={{ fontSize: '1.6rem', fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>
@@ -465,7 +541,6 @@ export default function FinOpsDashboard() {
         </div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-          {/* Language Toggle */}
           <div style={{ display: 'flex', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '20px', padding: '3px', border: '1px solid rgba(255,255,255,0.1)' }}>
             <button 
               onClick={() => setLang('en')}
@@ -483,32 +558,26 @@ export default function FinOpsDashboard() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main style={{ flex: 1, position: 'relative', display: 'grid', gridTemplateColumns: '380px 1fr 380px', padding: '30px 40px', gap: '40px', height: 'calc(100vh - 75px)', overflow: 'hidden' }}>
         
-        {/* Hologram Canvas (Background) */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, zIndex: 0, pointerEvents: 'auto' }}>
           <DataPurificationHologram isTesting={testState === 'testing'} results={testResults} lang={lang} />
         </div>
 
-        {/* Left Panel */}
         <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', gap: '25px', height: '100%', overflowY: 'auto', pointerEvents: 'none' }}>
-          
           <div className="glass-panel-premium" style={{ pointerEvents: 'auto', backdropFilter: 'blur(8px)', background: 'rgba(5, 7, 10, 0.6)' }}>
             <h2 style={{ color: '#00E5FF', fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem', margin: '0 0 25px 0', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
               {t.section_opt} <span>{t.live}</span>
             </h2>
-            
             <div style={{ marginBottom: '30px' }}>
               <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>{t.trash_tokens}</div>
               <div style={{ fontSize: '3.5rem', fontWeight: 800, display: 'flex', alignItems: 'baseline', gap: '8px', margin: 0, transition: 'all 0.5s', textShadow: testState === 'done' ? '0 0 20px rgba(0,229,255,0.5)' : 'none' }} className={testState === 'done' ? 'gradient-text-cyan' : ''}>
                 {vectorSavings.toFixed(1)}<span style={{ fontSize: '1.5rem', color: '#00E5FF' }}>%</span>
               </div>
               <div style={{ width: '100%', height: '6px', backgroundColor: '#1A1F24', borderRadius: '3px', marginTop: '12px', overflow: 'hidden', border: '1px solid #333' }}>
-                <div style={{ height: '100%', width: `${Math.min(vectorSavings, 100)}%`, background: 'linear-gradient(90deg, #ff0055, #a855f7, #00E5FF)', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 0 10px rgba(0,229,255,0.5)' }}></div>
+                <div style={{ height: '100%', width: \`\${Math.min(vectorSavings, 100)}%\`, background: 'linear-gradient(90deg, #ff0055, #a855f7, #00E5FF)', transition: 'width 1s cubic-bezier(0.16, 1, 0.3, 1)', boxShadow: '0 0 10px rgba(0,229,255,0.5)' }}></div>
               </div>
             </div>
-
             <div style={{ marginBottom: '30px', background: 'rgba(0,0,0,0.4)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
               <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '12px', fontWeight: 600 }}>{t.gpu_cluster}</div>
               <div style={{ fontSize: '0.9rem', fontFamily: 'Roboto Mono, monospace', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -522,20 +591,16 @@ export default function FinOpsDashboard() {
                 </div>
               </div>
             </div>
-
             <div>
               <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>{t.proj_savings}</div>
               <div className="gradient-text-green" style={{ fontSize: '2.5rem', fontWeight: 700, fontFamily: 'Roboto Mono, monospace', margin: 0 }}>
-                ${usdSaved.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                \${usdSaved.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </div>
             </div>
           </div>
-
           <div className="glass-panel-premium glass-panel-purple" style={{ pointerEvents: 'auto', backdropFilter: 'blur(8px)', background: 'rgba(5, 7, 10, 0.6)' }}>
              <h2 style={{ color: '#a855f7', fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem', margin: '0 0 15px 0', letterSpacing: '1px', textTransform: 'uppercase' }}>{t.section_pruning}</h2>
-             <p style={{ color: '#A3B3C4', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 20px 0' }}>
-               {t.pruning_desc}
-             </p>
+             <p style={{ color: '#A3B3C4', fontSize: '0.85rem', lineHeight: '1.6', margin: '0 0 20px 0' }}>{t.pruning_desc}</p>
              <div style={{ fontFamily: 'Roboto Mono, monospace', fontSize: '0.8rem', color: '#00E5FF', backgroundColor: 'rgba(0,0,0,0.6)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(168,85,247,0.3)', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                <div>{t.clean}<strong style={{ color: '#fff' }}>{(tokensCleaned / 1000000).toFixed(2)}M</strong></div>
                <div>{t.poison_rej}<strong style={{ color: '#ff0055' }}>{quarantineCount.toLocaleString()}</strong></div>
@@ -545,9 +610,8 @@ export default function FinOpsDashboard() {
           </div>
         </div>
 
-        {/* Center Space - Terminal & Actions */}
         <div style={{ zIndex: 5, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', paddingBottom: '30px', pointerEvents: 'auto' }}>
-            <div className={`terminal-container ${testState === 'testing' ? 'active' : ''}`} style={{ marginBottom: '25px', backdropFilter: 'blur(5px)', background: 'rgba(0, 0, 0, 0.7)' }}>
+            <div className={\`terminal-container \${testState === 'testing' ? 'active' : ''}\`} style={{ marginBottom: '25px', backdropFilter: 'blur(5px)', background: 'rgba(0, 0, 0, 0.7)' }}>
                 <div className="terminal-scanline"></div>
                 <div style={{ color: '#8B949E', borderBottom: '1px solid #333', paddingBottom: '12px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
                   <span>{t.terminal_title}</span>
@@ -561,30 +625,22 @@ export default function FinOpsDashboard() {
                     {testState === 'testing' && <span style={{ color: '#fff', animation: 'blink 1s infinite' }}>█</span>}
                 </div>
             </div>
-            
-            <button 
-                className="btn-execute-premium"
-                onClick={handleRunTest}
-                disabled={testState === 'testing'}
-            >
+            <button className="btn-execute-premium" onClick={handleRunTest} disabled={testState === 'testing'}>
                 {testState === 'testing' ? t.btn_auditing : t.btn_execute}
             </button>
         </div>
 
-        {/* Right Panel */}
         <div style={{ zIndex: 10, display: 'flex', flexDirection: 'column', gap: '25px', height: '100%', overflowY: 'auto', pointerEvents: 'none' }}>
           <div className="glass-panel-premium glass-panel-green" style={{ pointerEvents: 'auto', backdropFilter: 'blur(8px)', background: 'rgba(5, 7, 10, 0.6)' }}>
             <h2 style={{ color: '#22c55e', fontFamily: 'Roboto Mono, monospace', fontSize: '0.9rem', margin: '0 0 25px 0', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', justifyContent: 'space-between' }}>
               {t.section_eco} <span>{t.eco}</span>
             </h2>
-            
             <div style={{ marginBottom: '30px' }}>
               <div style={{ color: '#8B949E', fontSize: '0.8rem', textTransform: 'uppercase', marginBottom: '8px', fontWeight: 600 }}>{t.co2}</div>
               <div className="gradient-text-green" style={{ fontSize: '3.5rem', fontWeight: 800, margin: 0, textShadow: '0 0 20px rgba(34,197,94,0.3)' }}>
                 {co2Saved.toLocaleString('en-US', {maximumFractionDigits: 0})}
               </div>
             </div>
-
             <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
               <div style={{ backgroundColor: 'rgba(0,0,0,0.6)', padding: '15px', borderRadius: '8px', border: '1px solid rgba(255,0,85,0.2)', borderLeft: '4px solid #ff0055' }}>
                 <div style={{ color: '#A3B3C4', fontSize: '0.75rem', textTransform: 'uppercase', marginBottom: '8px' }}>{t.thermal_raw}</div>
@@ -597,21 +653,15 @@ export default function FinOpsDashboard() {
                 </div>
               </div>
             </div>
-            
             <div style={{ marginTop: '25px', fontSize: '0.85rem', color: '#A3B3C4', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '20px', lineHeight: '1.6' }}>
               {t.eco_desc}
             </div>
           </div>
         </div>
-
       </main>
-      <style dangerouslySetInnerHTML={{__html: `
-        @keyframes blink {
-            0% { opacity: 1; }
-            50% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-      `}} />
+      <style dangerouslySetInnerHTML={{__html: \`
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+      \`}} />
     </div>
   );
 }
