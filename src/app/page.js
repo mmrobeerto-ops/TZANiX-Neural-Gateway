@@ -189,9 +189,9 @@ export default function FinOpsDashboard() {
       <header style={{ borderBottom: '1px solid #333', padding: '15px 35px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', zIndex: 20, flexShrink: 0, height: '75px', backgroundColor: '#050505' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <h1 style={{ fontFamily: 'Barlow, sans-serif', fontSize: '1.8rem', fontWeight: 800, margin: 0, letterSpacing: '2px', color: '#fff' }}>
-            {t.title_main} <span style={{ fontWeight: 400, color: '#666' }}>// {t.title_sub}</span>
+            {t.title_main} <span style={{ fontWeight: 400, color: '#64748b' }}>// {t.title_sub}</span>
           </h1>
-          <div style={{ padding: '4px 10px', border: '1px solid #00f0ff', color: '#00f0ff', fontSize: '0.70rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ padding: '4px 10px', border: '1px solid #333', color: '#64748b', fontSize: '0.70rem', fontWeight: 'bold', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ width: '6px', height: '6px', backgroundColor: '#00f0ff', animation: 'pulse 1s infinite' }}></span>
             {t.badge}
           </div>
@@ -199,11 +199,11 @@ export default function FinOpsDashboard() {
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button onClick={() => setLang('en')} style={{ background: lang === 'en' ? '#00f0ff' : 'transparent', color: lang === 'en' ? '#000' : '#666', border: '1px solid #333', padding: '4px 12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', textTransform: 'uppercase' }}>EN</button>
-            <button onClick={() => setLang('es')} style={{ background: lang === 'es' ? '#00f0ff' : 'transparent', color: lang === 'es' ? '#000' : '#666', border: '1px solid #333', padding: '4px 12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', textTransform: 'uppercase' }}>ES</button>
+            <button onClick={() => setLang('en')} style={{ background: lang === 'en' ? '#333' : 'transparent', color: lang === 'en' ? '#fff' : '#64748b', border: '1px solid #333', padding: '4px 12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', textTransform: 'uppercase' }}>EN</button>
+            <button onClick={() => setLang('es')} style={{ background: lang === 'es' ? '#333' : 'transparent', color: lang === 'es' ? '#fff' : '#64748b', border: '1px solid #333', padding: '4px 12px', fontSize: '0.75rem', fontWeight: 'bold', cursor: 'pointer', textTransform: 'uppercase' }}>ES</button>
           </div>
 
-          <Link href="/" style={{ border: '1px solid #00f0ff', color: '#00f0ff', background: 'transparent', padding: '8px 16px', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', transition: 'all 0.2s', textTransform: 'uppercase' }}>
+          <Link href="/" style={{ border: '1px solid #333', color: '#64748b', background: 'transparent', padding: '8px 16px', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 'bold', letterSpacing: '1px', transition: 'all 0.2s', textTransform: 'uppercase' }}>
             {t.btn_return}
           </Link>
         </div>
@@ -215,55 +215,55 @@ export default function FinOpsDashboard() {
         {/* LEFT COLUMN: METRICS */}
         <div style={{ borderRight: '1px solid #333', padding: '30px', display: 'flex', flexDirection: 'column', gap: '30px', overflowY: 'auto', backgroundColor: '#050505' }}>
           <div>
-            <h2 style={{ color: '#00f0ff', fontSize: '0.8rem', margin: '0 0 20px 0', letterSpacing: '2px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
-              {t.section_opt} <span style={{ color: '#ff0055' }}>{t.live}</span>
+            <h2 style={{ color: '#64748b', fontSize: '0.8rem', margin: '0 0 20px 0', letterSpacing: '2px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
+              {t.section_opt} <span style={{ color: '#64748b' }}>{t.live}</span>
             </h2>
             <div style={{ marginBottom: '25px' }}>
-              <div style={{ color: '#666', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '5px' }}>{t.trash_tokens}</div>
-              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: testState === 'done' ? '#00f0ff' : '#fff', letterSpacing: '-1px' }}>
-                {vectorSavings.toFixed(1)}<span style={{ fontSize: '1.2rem', color: '#666' }}>%</span>
+              <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '5px' }}>{t.trash_tokens}</div>
+              <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#fff', letterSpacing: '-1px' }}>
+                {vectorSavings.toFixed(1)}<span style={{ fontSize: '1.2rem', color: '#64748b' }}>%</span>
               </div>
             </div>
             
             <div style={{ marginBottom: '25px', border: '1px solid #333', padding: '15px', backgroundColor: '#000' }}>
-              <div style={{ color: '#666', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '10px' }}>{t.gpu_cluster}</div>
+              <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '10px' }}>{t.gpu_cluster}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #333', paddingBottom: '8px', marginBottom: '8px', fontSize: '0.8rem' }}>
-                <span style={{ color: '#ff0055' }}>{t.raw_ingestion}</span>
-                <span>64x GPUs</span>
+                <span style={{ color: '#64748b' }}>{t.raw_ingestion}</span>
+                <span style={{ color: '#fff' }}>64x GPUs</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                 <span style={{ color: '#00f0ff' }}>{t.tzanix_filtered}</span>
-                <span style={{ color: testState === 'done' ? '#00f0ff' : '#fff' }}>{testState === 'done' ? '1x GPUs' : '38x GPUs'}</span>
+                <span style={{ color: '#fff' }}>{testState === 'done' ? '1x GPUs' : '38x GPUs'}</span>
               </div>
             </div>
 
             <div>
-              <div style={{ color: '#666', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '5px' }}>{t.proj_savings}</div>
-              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#22c55e' }}>
+              <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '5px' }}>{t.proj_savings}</div>
+              <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#fff' }}>
                 ${usdSaved.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
               </div>
             </div>
           </div>
           
           <div style={{ marginTop: 'auto' }}>
-            <h2 style={{ color: '#00f0ff', fontSize: '0.8rem', margin: '0 0 15px 0', letterSpacing: '2px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
+            <h2 style={{ color: '#64748b', fontSize: '0.8rem', margin: '0 0 15px 0', letterSpacing: '2px', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
               {t.section_pruning}
             </h2>
             <div style={{ fontSize: '0.75rem', display: 'flex', flexDirection: 'column', gap: '8px', padding: '15px', border: '1px solid #333', backgroundColor: '#000' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>{t.clean}</span>
-                <strong style={{ color: '#00f0ff' }}>{(tokensCleaned / 1000000).toFixed(2)}M</strong>
+                <span style={{ color: '#64748b' }}>{t.clean}</span>
+                <strong style={{ color: '#fff' }}>{(tokensCleaned / 1000000).toFixed(2)}M</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>{t.poison_rej}</span>
+                <span style={{ color: '#64748b' }}>{t.poison_rej}</span>
                 <strong style={{ color: '#ff0055' }}>{quarantineCount.toLocaleString()}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>{t.err_margin}</span>
+                <span style={{ color: '#64748b' }}>{t.err_margin}</span>
                 <strong style={{ color: '#fff' }}>{testResults?.margin_of_error || "N/A"}</strong>
               </div>
               <div style={{ borderTop: '1px dashed #333', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: '#666' }}>{t.net_latency}</span>
+                <span style={{ color: '#64748b' }}>{t.net_latency}</span>
                 <strong style={{ color: '#00f0ff' }}>{testState === 'done' ? '3.14ms' : '0.38ms'}</strong>
               </div>
             </div>
@@ -277,20 +277,20 @@ export default function FinOpsDashboard() {
           </div>
           
           <div style={{ height: '280px', borderTop: '1px solid #333', padding: '20px 30px', display: 'flex', flexDirection: 'column', backgroundColor: '#050505' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#666', borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '10px', fontSize: '0.8rem', letterSpacing: '1px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#64748b', borderBottom: '1px solid #333', paddingBottom: '10px', marginBottom: '10px', fontSize: '0.8rem', letterSpacing: '1px' }}>
               <span>{t.terminal_title}</span>
-              <span style={{ color: testState === 'testing' ? '#00f0ff' : '#666' }}>{t.sys_op}</span>
+              <span style={{ color: '#64748b' }}>{t.sys_op}</span>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem' }}>
               {terminalLogs.length === 0 && <span style={{ color: '#444' }}>{t.awaiting}</span>}
               {terminalLogs.map((log, i) => (
-                <span key={i} style={{ color: log.includes('✅') ? '#00f0ff' : (log.includes('INJECT') || log.includes('INYECT') || log.includes('MALICIOUS')) ? '#ff0055' : '#888' }}>
+                <span key={i} style={{ color: log.includes('✅') ? '#00f0ff' : (log.includes('INJECT') || log.includes('INYECT') || log.includes('MALICIOUS')) ? '#ff0055' : '#64748b' }}>
                   {log}
                 </span>
               ))}
-              {testState === 'testing' && <span style={{ color: '#00f0ff', animation: 'blink 1s infinite' }}>█</span>}
+              {testState === 'testing' && <span style={{ color: '#64748b', animation: 'blink 1s infinite' }}>█</span>}
             </div>
-            <button onClick={handleRunTest} disabled={testState === 'testing'} style={{ marginTop: '15px', background: testState === 'testing' ? '#111' : 'transparent', color: testState === 'testing' ? '#666' : '#00f0ff', border: `1px solid ${testState === 'testing' ? '#333' : '#00f0ff'}`, padding: '12px', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '2px', cursor: testState === 'testing' ? 'not-allowed' : 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}>
+            <button onClick={handleRunTest} disabled={testState === 'testing'} style={{ marginTop: '15px', background: testState === 'testing' ? '#111' : 'transparent', color: testState === 'testing' ? '#64748b' : '#64748b', border: '1px solid #333', padding: '12px', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '2px', cursor: testState === 'testing' ? 'not-allowed' : 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}>
               {testState === 'testing' ? t.btn_auditing : t.btn_execute}
             </button>
           </div>
@@ -298,30 +298,30 @@ export default function FinOpsDashboard() {
 
         {/* RIGHT COLUMN: ECO IMPACT */}
         <div style={{ borderLeft: '1px solid #333', padding: '30px', display: 'flex', flexDirection: 'column', backgroundColor: '#050505' }}>
-          <h2 style={{ color: '#22c55e', fontSize: '0.8rem', margin: '0 0 20px 0', letterSpacing: '2px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
+          <h2 style={{ color: '#64748b', fontSize: '0.8rem', margin: '0 0 20px 0', letterSpacing: '2px', display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid #333', paddingBottom: '10px' }}>
             {t.section_eco} <span>{t.eco}</span>
           </h2>
           <div style={{ marginBottom: '30px' }}>
-            <div style={{ color: '#666', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '5px' }}>{t.co2}</div>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#22c55e', letterSpacing: '-1px' }}>
+            <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '5px' }}>{t.co2}</div>
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#fff', letterSpacing: '-1px' }}>
               {co2Saved.toLocaleString('en-US', {maximumFractionDigits: 0})}
             </div>
           </div>
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
             <div style={{ padding: '15px', border: '1px solid #333', borderLeft: '4px solid #ff0055', backgroundColor: '#000' }}>
-              <div style={{ color: '#666', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '8px' }}>{t.thermal_raw}</div>
-              <div style={{ color: '#ff0055', fontSize: '0.9rem', fontWeight: 'bold' }}>{t.excess_heat}</div>
+              <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '8px' }}>{t.thermal_raw}</div>
+              <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 'bold' }}>{t.excess_heat}</div>
             </div>
-            <div style={{ padding: '15px', border: '1px solid #333', borderLeft: '4px solid #22c55e', backgroundColor: '#000' }}>
-              <div style={{ color: '#666', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '8px' }}>{t.with_tzanix}</div>
-              <div style={{ color: '#22c55e', fontSize: '0.9rem', fontWeight: 'bold' }}>
+            <div style={{ padding: '15px', border: '1px solid #333', borderLeft: '4px solid #00f0ff', backgroundColor: '#000' }}>
+              <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '8px' }}>{t.with_tzanix}</div>
+              <div style={{ color: '#fff', fontSize: '0.9rem', fontWeight: 'bold' }}>
                 {testState === 'done' ? t.heat_dissip_done : t.heat_dissip}
               </div>
             </div>
           </div>
 
-          <div style={{ marginTop: '25px', fontSize: '0.75rem', color: '#666', borderTop: '1px dashed #333', paddingTop: '20px', lineHeight: '1.6' }}>
+          <div style={{ marginTop: '25px', fontSize: '0.75rem', color: '#64748b', borderTop: '1px dashed #333', paddingTop: '20px', lineHeight: '1.6' }}>
             {t.eco_desc}
           </div>
         </div>

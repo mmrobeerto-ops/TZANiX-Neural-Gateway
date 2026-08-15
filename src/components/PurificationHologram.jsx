@@ -1,136 +1,122 @@
-"use client";
 import React, { useEffect, useRef } from 'react';
-
 const PurificationHologram = () => {
   const canvasRef = useRef(null);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
     let particles = [];
-
-    // Ajustar tamaño del canvas
     const resize = () => {
       canvas.width = canvas.parentElement.clientWidth;
       canvas.height = canvas.parentElement.clientHeight;
     };
     window.addEventListener('resize', resize);
     resize();
-
-    // Clase Partícula
-    class Particle {
+    // Centro gravitacional (El Gateway) - 70% a la derecha
+    const gatewayX = canvas.width * 0.7;
+    const gatewayY = canvas.height / 2;
+    class OrganicParticle {
       constructor() {
         this.reset();
       }
-
       reset() {
-        this.x = 0; // Nacen a la izquierda
-        this.y = (Math.random() * canvas.height * 0.6) + (canvas.height * 0.2); // Nacen dispersas
-        this.speedX = Math.random() * 2 + 1;
-        this.speedY = (Math.random() - 0.5) * 4; // Movimiento errático (ruido)
+        // Nacen muy dispersas a la izquierda
+        this.x = 0;
+        this.y = (Math.random() * canvas.height * 1.5) - (canvas.height * 0.25);
+        this.history = [{x: this.x, y: this.y}]; // Guardamos el rastro
         this.isPurified = false;
-        this.color = '#ff0055'; // Rojo (Trash vector)
-        this.size = Math.random() * 2 + 1;
-        this.opacity = 1;
+        this.speed = Math.random() * 2 + 1.5;
+        this.color = '#00f0ff'; // Todo cyan como en tu foto
+        this.size = Math.random() * 1.5 + 0.5;
       }
-
       update() {
-        this.x += this.speedX;
-        
-        // ZONA DE CAOS (Izquierda)
-        if (this.x < canvas.width / 2) {
-          this.y += this.speedY + (Math.random() - 0.5) * 2; // Mucha vibración
-        } 
-        
-        // EL FILTRO (Centro del Canvas)
-        else if (!this.isPurified) {
-          // El 80% de los datos (ruido) muere aquí (simula la optimización)
-          if (Math.random() > 0.2) {
-            this.opacity -= 0.1; // Se desintegran
-            if (this.opacity <= 0) this.reset();
-          } else {
-            // El 20% sobrevive y se purifica
+        if (!this.isPurified) {
+          // Fase 1: Succión hacia el Gateway
+          const dx = gatewayX - this.x;
+          const dy = gatewayY - this.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+          
+          // Movimiento orgánico (curvas)
+          this.x += (dx / distance) * this.speed * 2;
+          this.y += (dy / distance) * this.speed * 2;
+          this.y += (Math.random() - 0.5) * 4; // Un poco de vibración
+          // Si llega al centro, se purifica
+          if (distance < 10) {
             this.isPurified = true;
-            this.color = '#00f0ff'; // Cyan (Data pura)
-            this.speedY = 0; // Pierden el caos, viajan en línea recta
-            this.speedX = 4; // Aceleran hacia las GPUs
+            this.y = gatewayY + (Math.random() - 0.5) * 10; // Salen muy juntas
           }
+        } else {
+          // Fase 2: Flujo purificado (Líneas rectas a la derecha)
+          this.x += this.speed * 4; // Aceleran
+          this.y += (Math.random() - 0.5) * 0.5; // Vibración mínima
         }
-
-        // Si salen de la pantalla, vuelven a nacer
+        // Guardar historial para dibujar la "cola" o línea
+        this.history.push({x: this.x, y: this.y});
+        if (this.history.length > 20) {
+          this.history.shift(); // Mantener la cola de un tamaño fijo
+        }
+        // Si sale de la pantalla, reiniciar
         if (this.x > canvas.width) {
           this.reset();
         }
       }
-
       draw() {
-        if (this.opacity <= 0) return;
-        ctx.globalAlpha = this.opacity;
-        ctx.fillStyle = this.color;
+        if (this.history.length < 2) return;
+        // Dibujar el rastro (la línea orgánica)
+        ctx.beginPath();
+        ctx.moveTo(this.history[0].x, this.history[0].y);
+        for (let i = 1; i < this.history.length; i++) {
+          // Curva suave
+          ctx.lineTo(this.history[i].x, this.history[i].y);
+        }
         
-        // Brillo holográfico
+        ctx.strokeStyle = `rgba(0, 240, 255, ${this.isPurified ? 0.8 : 0.2})`;
+        ctx.lineWidth = this.isPurified ? 1.5 : 0.5;
+        ctx.stroke();
+        // Dibujar la cabeza (el punto luminoso)
+        ctx.fillStyle = '#fff';
         ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
-        
+        ctx.shadowColor = '#00f0ff';
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
-        ctx.globalAlpha = 1; // reset
-        ctx.shadowBlur = 0;
+        ctx.shadowBlur = 0; // reset
       }
     }
-
-    // Inicializar 300 partículas
-    for (let i = 0; i < 300; i++) {
-      particles.push(new Particle());
+    // Inicializar partículas
+    for (let i = 0; i < 150; i++) {
+      particles.push(new OrganicParticle());
     }
-
-    // Ciclo de animación
     const render = () => {
-      // Fondo negro translúcido para dejar rastro (efecto movimiento)
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      // Fondo para dejar rastro de desvanecimiento
+      ctx.fillStyle = 'rgba(5, 7, 10, 0.3)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Dibujar la "Barrera Neural" en el centro
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.1)';
-      ctx.lineWidth = 1;
+      // Dibujar la Singularidad / Núcleo central
       ctx.beginPath();
-      ctx.moveTo(canvas.width / 2, 0);
-      ctx.lineTo(canvas.width / 2, canvas.height);
-      ctx.stroke();
-
-      // Actualizar y dibujar partículas
+      const gradient = ctx.createRadialGradient(gatewayX, gatewayY, 0, gatewayX, gatewayY, 50);
+      gradient.addColorStop(0, 'rgba(0, 240, 255, 1)');
+      gradient.addColorStop(0.2, 'rgba(0, 240, 255, 0.5)');
+      gradient.addColorStop(1, 'rgba(0, 240, 255, 0)');
+      ctx.fillStyle = gradient;
+      ctx.arc(gatewayX, gatewayY, 50, 0, Math.PI * 2);
+      ctx.fill();
+      // Dibujar partículas
       particles.forEach(p => {
         p.update();
         p.draw();
       });
-
       animationFrameId = requestAnimationFrame(render);
     };
-
     render();
-
     return () => {
       window.removeEventListener('resize', resize);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
-
   return (
-    <div className="w-full h-64 md:h-96 relative bg-[#0a0a0a] border border-[#333] overflow-hidden rounded-md shadow-[0_0_15px_rgba(0,240,255,0.1)]">
-      {/* Textos descriptivos flotantes */}
-      <div className="absolute top-4 left-4 text-[#ff0055] font-mono text-[10px] tracking-widest z-10 font-bold">
-        [ INGESTIÓN RAW / RUIDO ]
-      </div>
-      <div className="absolute top-4 right-4 text-[#00f0ff] font-mono text-[10px] tracking-widest z-10 text-right font-bold">
-        [ TZANIX STREAM PURIFICADO ]
-      </div>
-      
-      {/* El Canvas donde ocurre la magia */}
+    <div className="w-full h-80 relative bg-[#05070a] border border-white/5 overflow-hidden">
       <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full" />
     </div>
   );
 };
-
 export default PurificationHologram;
