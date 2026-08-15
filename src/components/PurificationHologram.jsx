@@ -7,7 +7,6 @@ const PurificationHologram = () => {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
-    let particles = [];
 
     const resize = () => {
       canvas.width = canvas.parentElement.clientWidth;
@@ -16,151 +15,190 @@ const PurificationHologram = () => {
     window.addEventListener('resize', resize);
     resize();
 
-    // Centro gravitacional (El Gateway) - 70% a la derecha
-    const gatewayX = canvas.width * 0.7;
-    const gatewayY = canvas.height / 2;
+    // Malla 3D (Tensor Mesh)
+    const cols = 55;
+    const rows = 28;
+    const spacingX = 22;
+    const spacingZ = 22;
 
-    class OrganicParticle {
-      constructor() {
-        this.reset();
-      }
-
-      reset() {
-        // Nacen muy dispersas a la izquierda
-        this.x = 0;
-        this.y = (Math.random() * canvas.height * 1.5) - (canvas.height * 0.25);
-        this.history = [{x: this.x, y: this.y}]; // Guardamos el rastro
-        
-        this.isPurified = false;
-        this.isRejected = false;
-        this.speed = Math.random() * 2 + 1.5;
-        this.size = Math.random() * 1.5 + 0.5;
-
-        // 15% probability of being noise/trash
-        this.isNoise = Math.random() > 0.85; 
-        
-        if (this.isNoise) {
-          this.color = '#ff0055'; // Rojo para basura
-        } else {
-          this.color = '#00f0ff'; // Cyan para datos buenos
-        }
-      }
-
-      update() {
-        if (!this.isPurified && !this.isRejected) {
-          // Fase 1: Succión hacia el Gateway
-          const dx = gatewayX - this.x;
-          const dy = gatewayY - this.y;
-          const distance = Math.sqrt(dx * dx + dy * dy);
-          
-          // Movimiento orgánico (curvas)
-          this.x += (dx / distance) * this.speed * 2;
-          this.y += (dy / distance) * this.speed * 2;
-          this.y += (Math.random() - 0.5) * (this.isNoise ? 8 : 4); // El ruido vibra mucho más
-          
-          // Si llega al centro (Singularidad)
-          if (distance < 15) {
-            if (this.isNoise) {
-              // El ruido es rechazado violentamente hacia abajo y dispersado
-              this.isRejected = true;
-              this.rejectSpeedX = (Math.random() - 0.5) * 5 - 2; // Rebote hacia atrás a veces
-              this.rejectSpeedY = Math.random() * 5 + 5; // Cae hacia la "zona de cuarentena"
-            } else {
-              // El dato puro es purificado y alineado
-              this.isPurified = true;
-              this.y = gatewayY + (Math.random() - 0.5) * 10; // Salen muy juntas
-            }
-          }
-        } else if (this.isPurified) {
-          // Fase 2: Flujo purificado (Líneas rectas a la derecha)
-          this.x += this.speed * 4; // Aceleran
-          this.y += (Math.random() - 0.5) * 0.5; // Vibración mínima
-        } else if (this.isRejected) {
-          // Caída a zona de cuarentena
-          this.x += this.rejectSpeedX;
-          this.y += this.rejectSpeedY;
-          this.size *= 0.95; // Se desintegra rápidamente
-        }
-
-        // Guardar historial para dibujar la "cola" o línea
-        this.history.push({x: this.x, y: this.y});
-        if (this.history.length > 20) {
-          this.history.shift(); // Mantener la cola de un tamaño fijo
-        }
-
-        // Si sale de la pantalla o se desintegra por completo, reiniciar
-        if (this.x > canvas.width || this.y > canvas.height || this.size < 0.1) {
-          this.reset();
-        }
-      }
-
-      draw() {
-        if (this.history.length < 2) return;
-        
-        // Dibujar el rastro (la línea orgánica)
-        ctx.beginPath();
-        ctx.moveTo(this.history[0].x, this.history[0].y);
-        for (let i = 1; i < this.history.length; i++) {
-          // Curva suave
-          ctx.lineTo(this.history[i].x, this.history[i].y);
-        }
-        
-        // El ruido tiene un stroke diferente
-        if (this.isNoise) {
-          ctx.strokeStyle = `rgba(255, 0, 85, ${this.isRejected ? 0.8 : 0.4})`;
-          ctx.lineWidth = this.isRejected ? 2 : 1;
-        } else {
-          ctx.strokeStyle = `rgba(0, 240, 255, ${this.isPurified ? 0.8 : 0.2})`;
-          ctx.lineWidth = this.isPurified ? 1.5 : 0.5;
-        }
-        ctx.stroke();
-
-        // Dibujar la cabeza (el punto luminoso)
-        ctx.fillStyle = '#fff';
-        ctx.shadowBlur = 10;
-        ctx.shadowColor = this.color;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0; // reset
-      }
-    }
-
-    // Inicializar partículas (Aumentamos a 250 para que se vea más impresionante y grande)
-    for (let i = 0; i < 250; i++) {
-      particles.push(new OrganicParticle());
-    }
+    let time = 0;
 
     const render = () => {
-      // Fondo para dejar rastro de desvanecimiento
-      ctx.fillStyle = 'rgba(5, 7, 10, 0.3)';
+      // Limpiar con negro puro (aeroespacial)
+      ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      time -= 0.12; // Velocidad del flujo de datos (de izquierda a derecha)
       
-      // Dibujar la Singularidad / Núcleo central
-      ctx.beginPath();
-      const gradient = ctx.createRadialGradient(gatewayX, gatewayY, 0, gatewayX, gatewayY, 60); // Más grande
-      gradient.addColorStop(0, 'rgba(0, 240, 255, 1)');
-      gradient.addColorStop(0.1, 'rgba(0, 240, 255, 0.6)');
-      gradient.addColorStop(0.3, 'rgba(0, 240, 255, 0.1)');
-      gradient.addColorStop(1, 'rgba(0, 240, 255, 0)');
-      ctx.fillStyle = gradient;
-      ctx.arc(gatewayX, gatewayY, 60, 0, Math.PI * 2);
-      ctx.fill();
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
 
-      // Zona de Cuarentena (Abajo del gateway)
-      ctx.beginPath();
-      const redGradient = ctx.createRadialGradient(gatewayX, canvas.height, 0, gatewayX, canvas.height, 100);
-      redGradient.addColorStop(0, 'rgba(255, 0, 85, 0.15)');
-      redGradient.addColorStop(1, 'rgba(255, 0, 85, 0)');
-      ctx.fillStyle = redGradient;
-      ctx.arc(gatewayX, canvas.height, 100, 0, Math.PI * 2);
-      ctx.fill();
+      // El Gateway (Línea MAD) - Ubicado al 45% del ancho
+      const laserCol = Math.floor(cols * 0.45);
 
-      // Dibujar partículas
-      particles.forEach(p => {
-        p.update();
-        p.draw();
-      });
+      const projected = [];
+      
+      // 1. Proyectar todos los puntos 3D a 2D
+      for (let c = 0; c < cols; c++) {
+        projected[c] = [];
+        for (let r = 0; r < rows; r++) {
+          
+          let y = 0;
+          let isNoise = false;
+          let isSevereNoise = false;
+
+          // Fase 1: Antes del Láser (Caos, Ingesta Cruda)
+          if (c < laserCol) {
+            // El desplazamiento simula que la data viaja hacia la derecha
+            const dataPoint = c - time; 
+            
+            // Función matemática para generar picos caóticos (Spikes)
+            const noise = Math.sin(dataPoint * 0.5) * Math.cos(r * 0.8) + Math.sin(dataPoint * 1.2 + r);
+            
+            if (noise > 1.1) {
+               y = (noise - 1.1) * -80; // Pico brutal hacia arriba
+               isNoise = true;
+               if (noise > 1.5) isSevereNoise = true;
+            } else if (noise < -1.1) {
+               y = (noise + 1.1) * -80; // Pico brutal hacia abajo (eje Y invertido en canvas)
+               isNoise = true;
+               if (noise < -1.5) isSevereNoise = true;
+            } else {
+               y = Math.sin(dataPoint * 0.1 + r * 0.2) * 5; // Vibración base leve
+            }
+          } 
+          // Fase 2: Exactamente en el Láser
+          else if (c === laserCol) {
+             y = 0; // Se aplana instantáneamente (Purificación quirúrgica)
+          } 
+          // Fase 3: Después del Láser (Tensor Purificado)
+          else {
+             const dataPoint = c - time;
+             y = Math.sin(dataPoint * 0.05) * 2; // Ondulación casi perfecta y suave
+          }
+
+          // Coordenadas 3D locales
+          const x_3d = (c - cols / 2) * spacingX;
+          const z_3d = (r - rows / 2) * spacingZ;
+          const y_3d = y;
+
+          // Rotación Biométrica (Isometrica/Inclinada)
+          const rotX = 1.1; // Inclinación hacia adelante
+          const rotY = 0.0; // Sin rotación lateral para mantener flujo lineal
+          const rotZ = 0.05; // Ligera inclinación para darle perspectiva premium
+          
+          let x1 = x_3d * Math.cos(rotZ) - y_3d * Math.sin(rotZ);
+          let y1 = x_3d * Math.sin(rotZ) + y_3d * Math.cos(rotZ);
+          
+          let y2 = y1 * Math.cos(rotX) - z_3d * Math.sin(rotX);
+          let z2 = y1 * Math.sin(rotX) + z_3d * Math.cos(rotX);
+
+          // Proyección Perspectiva
+          const fov = 600;
+          const distance = 400;
+          const scale = fov / (z2 + distance);
+
+          const px = cx + x1 * scale;
+          const py = cy + y2 * scale + 60; // Bajar un poco la malla
+
+          projected[c][r] = { x: px, y: py, z: z2, isNoise, isSevereNoise, c };
+        }
+      }
+
+      // 2. Dibujar la Malla (Líneas)
+      // Dibujamos de atrás hacia adelante para la profundidad no es tan crítica en wireframe, pero lo hacemos por columnas
+      ctx.globalCompositeOperation = "screen";
+
+      for (let c = 0; c < cols - 1; c++) {
+        for (let r = 0; r < rows - 1; r++) {
+          const p1 = projected[c][r];
+          const p2 = projected[c+1][r];
+          const p3 = projected[c][r+1];
+
+          // Determinar el color de la celda de la malla
+          let color = '';
+          let lineWidth = 1;
+
+          // Si estamos en la zona purificada
+          if (c >= laserCol) {
+            color = `rgba(0, 240, 255, ${0.1 + (c - laserCol)*0.03})`; // Se ilumina progresivamente en Cyan
+            lineWidth = 1.2;
+          } 
+          // Si es ruido peligroso
+          else if (p1.isNoise || p2.isNoise || p3.isNoise) {
+            color = p1.isSevereNoise ? 'rgba(255, 0, 85, 0.9)' : 'rgba(255, 0, 85, 0.4)';
+            lineWidth = p1.isSevereNoise ? 2 : 1.5;
+          } 
+          // Datos crudos normales
+          else {
+            color = 'rgba(100, 116, 139, 0.2)'; // Slate gray tenue
+            lineWidth = 0.8;
+          }
+
+          // Aplicar atenuación en los bordes (Niebla/Fog)
+          const distToCenterZ = Math.abs(r - rows/2) / (rows/2); // 0 en centro, 1 en bordes
+          const distToEdgeX = Math.min(c, cols - c) / 10;
+          const fog = Math.max(0, 1 - distToCenterZ) * Math.min(1, distToEdgeX);
+          
+          ctx.globalAlpha = fog;
+          ctx.strokeStyle = color;
+          ctx.lineWidth = lineWidth;
+
+          // Dibujar Arista Horizontal
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+
+          // Dibujar Arista Vertical
+          ctx.beginPath();
+          ctx.moveTo(p1.x, p1.y);
+          ctx.lineTo(p3.x, p3.y);
+          ctx.stroke();
+        }
+      }
+
+      // 3. Dibujar la "Guillotina" o Láser MAD (El Filtro)
+      ctx.globalAlpha = 1;
+      const laserTop = projected[laserCol][0];
+      const laserBot = projected[laserCol][rows - 1];
+      const laserCenter = projected[laserCol][Math.floor(rows/2)];
+
+      // Rayo vertical principal
+      ctx.beginPath();
+      ctx.moveTo(laserCenter.x, laserTop.y - 200);
+      ctx.lineTo(laserCenter.x, laserBot.y + 100);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 20;
+      ctx.shadowColor = '#00f0ff';
+      ctx.stroke();
+
+      // Línea de corte sobre la malla (La cuchilla)
+      ctx.beginPath();
+      for (let r = 0; r < rows; r++) {
+         const p = projected[laserCol][r];
+         if (r === 0) ctx.moveTo(p.x, p.y);
+         else ctx.lineTo(p.x, p.y);
+      }
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Efecto de chispas o partículas cortadas en el láser (Rechazo)
+      for (let i = 0; i < 5; i++) {
+        const sparkY = laserTop.y + Math.random() * (laserBot.y - laserTop.y);
+        ctx.beginPath();
+        ctx.arc(laserCenter.x, sparkY, Math.random() * 2 + 1, 0, Math.PI * 2);
+        ctx.fillStyle = '#ff0055';
+        ctx.shadowColor = '#ff0055';
+        ctx.shadowBlur = 10;
+        ctx.fill();
+      }
+
+      ctx.shadowBlur = 0;
+      ctx.globalCompositeOperation = "source-over";
+
       animationFrameId = requestAnimationFrame(render);
     };
 
@@ -173,7 +211,20 @@ const PurificationHologram = () => {
   }, []);
 
   return (
-    <div className="w-full h-full min-h-[450px] relative bg-[#05070a] border border-white/5 overflow-hidden">
+    <div className="w-full h-full min-h-[450px] relative bg-[#000] overflow-hidden flex items-center justify-center">
+      {/* HUD Descriptivo interno */}
+      <div className="absolute top-6 left-6 text-[#64748b] font-mono text-[10px] tracking-[0.2em] font-bold z-10 flex flex-col gap-1">
+        <span>[INPUT_LAYER]</span>
+        <span className="text-[#ff0055] tracking-normal">STRUCTURAL NOISE DETECTED</span>
+      </div>
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 text-[#00f0ff] font-mono text-[10px] tracking-[0.2em] font-bold z-10">
+        [MAD_PRUNING_ENGINE_ACTIVE]
+      </div>
+      <div className="absolute top-6 right-6 text-[#64748b] font-mono text-[10px] tracking-[0.2em] font-bold z-10 text-right flex flex-col gap-1">
+        <span>[OUTPUT_TENSOR]</span>
+        <span className="text-[#00f0ff] tracking-normal">PURE HOMOGENEOUS DATA</span>
+      </div>
+
       <canvas ref={canvasRef} className="absolute inset-0 block w-full h-full" />
     </div>
   );
