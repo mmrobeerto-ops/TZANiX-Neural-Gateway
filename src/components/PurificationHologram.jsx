@@ -9,7 +9,6 @@ const PurificationHologram = () => {
     let animationFrameId;
 
     const resize = () => {
-      // Usamos el tamaño del contenedor padre
       const parent = canvas.parentElement;
       if (parent) {
         canvas.width = parent.clientWidth;
@@ -20,11 +19,10 @@ const PurificationHologram = () => {
     resize();
 
     // Malla 3D (Tensor Mesh)
-    // Para que se vea inmensa y llena de datos
-    const cols = 150; 
-    const rows = 80; 
-    const spacingX = 18;
-    const spacingZ = 18;
+    const cols = 120; 
+    const rows = 60; 
+    const spacingX = 25;
+    const spacingZ = 25;
 
     let time = 0;
 
@@ -37,19 +35,17 @@ const PurificationHologram = () => {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // VELOCIDAD EXTREMA - Procesando millones de datos
-      time -= 0.6; 
+      // Velocidad ajustada para ser fluida y viva sin romper la vista
+      time -= 0.35; 
       
       const cx = canvas.width / 2;
       const cy = canvas.height / 2;
 
-      // El Gateway (Línea MAD) al 45%
-      const laserCol = Math.floor(cols * 0.45);
+      // El Gateway en el puro centro
+      const laserCol = Math.floor(cols / 2);
 
       const projected = [];
-      
-      // Vibración constante del núcleo
-      const swayY = Math.sin(time * 0.1) * 10;
+      const swayY = Math.sin(time * 0.05) * 15; // Respiración vertical lenta
 
       // 1. Proyectar
       for (let c = 0; c < cols; c++) {
@@ -60,29 +56,28 @@ const PurificationHologram = () => {
           let isNoise = false;
           let isSevereNoise = false;
 
-          // Zona caótica (Izquierda)
+          // Izquierda (Caos)
           if (c < laserCol) {
             const dataPoint = c - time; 
             
-            // Ruido caótico, vibrando rápido
-            const noise = Math.sin(dataPoint * 0.8) * Math.cos(r * 1.5) + Math.sin(dataPoint * 2.5 + r * 0.8);
+            // Perfil de ruido estructural
+            const noise = Math.sin(dataPoint * 0.7) * Math.cos(r * 1.2) + Math.sin(dataPoint * 1.8 + r * 0.6);
             
-            if (noise > 1.0) {
-               y = (noise - 1.0) * -150; 
+            if (noise > 1.2) {
+               y = (noise - 1.2) * -120; // Picos agresivos
                isNoise = true;
-               if (noise > 1.5) isSevereNoise = true;
-            } else if (noise < -1.0) {
-               y = (noise + 1.0) * -150; 
+               if (noise > 1.6) isSevereNoise = true;
+            } else if (noise < -1.2) {
+               y = (noise + 1.2) * -120; 
                isNoise = true;
-               if (noise < -1.5) isSevereNoise = true;
+               if (noise < -1.6) isSevereNoise = true;
             } else {
-               // Ruido de fondo rápido
-               y = Math.sin(dataPoint * 0.5 + r * 0.3) * 15; 
+               y = Math.sin(dataPoint * 0.3 + r * 0.2) * 10; // Vibración base
             }
 
-            // Glitch ultra rápido
-            if (Math.random() < 0.02) {
-               y += (Math.random() - 0.5) * 80;
+            // Glitch aleatorio
+            if (Math.random() < 0.015) {
+               y += (Math.random() - 0.5) * 60;
                isSevereNoise = true;
                isNoise = true;
             }
@@ -90,18 +85,18 @@ const PurificationHologram = () => {
           } else if (c === laserCol) {
              y = 0; 
           } else {
-             // Zona purificada (Derecha)
+             // Derecha (Purificado)
              const dataPoint = c - time;
-             y = Math.sin(dataPoint * 0.1) * 2; // Súper liso
+             y = Math.sin(dataPoint * 0.08) * 3; // Flujo laminar perfecto
           }
 
           const x_3d = (c - cols / 2) * spacingX;
           const z_3d = (r - rows / 2) * spacingZ;
           const y_3d = y;
 
-          // Rotación Biométrica
-          const rotX = 1.1; 
-          const rotZ = Math.sin(time * 0.02) * 0.03; 
+          // Inclinación
+          const rotX = 1.05; // Pitch down para ver la malla desde arriba
+          const rotZ = Math.sin(time * 0.02) * 0.02; // Sway sutil
           
           let x1 = x_3d * Math.cos(rotZ) - y_3d * Math.sin(rotZ);
           let y1 = x_3d * Math.sin(rotZ) + y_3d * Math.cos(rotZ);
@@ -109,10 +104,13 @@ const PurificationHologram = () => {
           let y2 = y1 * Math.cos(rotX) - z_3d * Math.sin(rotX);
           let z2 = y1 * Math.sin(rotX) + z_3d * Math.cos(rotX);
 
-          // Proyección
-          const fov = 800;
-          const distance = 300;
-          const scale = fov / (z2 + distance);
+          // Proyección (Distance DEBE ser grande para que z2 + distance NUNCA sea <= 0)
+          const fov = 1000;
+          const distance = 1200; // Incrementado drásticamente para evitar la inversión detrás de la cámara
+          
+          // Prevenir error de división por cero o negativo (glitches gigantes de la captura anterior)
+          const zScale = (z2 + distance) > 10 ? (z2 + distance) : 10;
+          const scale = fov / zScale;
 
           const px = cx + x1 * scale;
           const py = cy + y2 * scale + swayY; 
@@ -121,9 +119,9 @@ const PurificationHologram = () => {
         }
       }
 
-      // 2. Dibujar Malla
       ctx.globalCompositeOperation = "screen";
 
+      // 2. Dibujar Malla
       for (let c = 0; c < cols - 1; c++) {
         for (let r = 0; r < rows - 1; r++) {
           const p1 = projected[c][r];
@@ -134,18 +132,19 @@ const PurificationHologram = () => {
           let lineWidth = 1;
 
           if (c >= laserCol) {
-            color = `rgba(0, 240, 255, ${0.2 + (c - laserCol)*0.02})`;
+            color = `rgba(0, 240, 255, ${0.3 + (c - laserCol)*0.01})`;
             lineWidth = 1.5;
           } else if (p1.isNoise || p2.isNoise || p3.isNoise) {
-            color = p1.isSevereNoise ? 'rgba(255, 0, 85, 1)' : 'rgba(255, 0, 85, 0.6)';
+            color = p1.isSevereNoise ? 'rgba(255, 0, 85, 0.9)' : 'rgba(255, 0, 85, 0.5)';
             lineWidth = p1.isSevereNoise ? 2.5 : 1.5;
           } else {
             color = 'rgba(100, 116, 139, 0.3)'; 
             lineWidth = 1.0;
           }
 
+          // Atenuación en los bordes para que no se corte feo
           const distToCenterZ = Math.abs(r - rows/2) / (rows/2); 
-          const fog = Math.max(0.15, 1 - distToCenterZ);
+          const fog = Math.max(0.05, 1 - Math.pow(distToCenterZ, 2)); // Suavizado cuadrático
           
           ctx.globalAlpha = fog;
           ctx.strokeStyle = color;
@@ -169,17 +168,17 @@ const PurificationHologram = () => {
       const laserBot = projected[laserCol][rows - 1];
       const laserCenter = projected[laserCol][Math.floor(rows/2)];
 
-      // Rayo láser vertical inmenso
+      // Haz central inmenso
       ctx.beginPath();
-      ctx.moveTo(laserCenter.x, laserTop.y - 800);
-      ctx.lineTo(laserCenter.x, laserBot.y + 800);
+      ctx.moveTo(laserCenter.x, laserTop.y - 1500);
+      ctx.lineTo(laserCenter.x, laserBot.y + 1500);
       ctx.strokeStyle = '#00f0ff';
-      ctx.lineWidth = 6;
-      ctx.shadowBlur = 40;
+      ctx.lineWidth = 4;
+      ctx.shadowBlur = 25;
       ctx.shadowColor = '#00f0ff';
       ctx.stroke();
 
-      // Línea de corte
+      // Línea de corte sobre la malla
       ctx.beginPath();
       for (let r = 0; r < rows; r++) {
          const p = projected[laserCol][r];
@@ -187,17 +186,17 @@ const PurificationHologram = () => {
          else ctx.lineTo(p.x, p.y);
       }
       ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 3;
       ctx.stroke();
 
-      // Millones de chispas rojas rechazadas
-      for (let i = 0; i < 25; i++) {
+      // Chispas de destrucción de ruido
+      for (let i = 0; i < 15; i++) {
         const sparkY = laserTop.y + Math.random() * (laserBot.y - laserTop.y);
         ctx.beginPath();
-        ctx.arc(laserCenter.x + (Math.random() * 40 - 20), sparkY, Math.random() * 4 + 1, 0, Math.PI * 2);
+        ctx.arc(laserCenter.x + (Math.random() * 30 - 15), sparkY, Math.random() * 3 + 1, 0, Math.PI * 2);
         ctx.fillStyle = '#ff0055';
         ctx.shadowColor = '#ff0055';
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 15;
         ctx.fill();
       }
 
@@ -207,7 +206,6 @@ const PurificationHologram = () => {
       animationFrameId = requestAnimationFrame(render);
     };
 
-    // Darle un pequeño delay al inicio para asegurar que el contenedor se mida correctamente
     setTimeout(resize, 100);
     render();
 
@@ -217,11 +215,9 @@ const PurificationHologram = () => {
     };
   }, []);
 
-  // SIN TAILWIND - USAMOS ESTILOS INLINE PARA GARANTIZAR QUE TOME EL 100%
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', backgroundColor: '#000000', overflow: 'hidden' }}>
       
-      {/* HUD Descriptivo interno */}
       <div style={{ position: 'absolute', top: '24px', left: '24px', color: '#64748b', fontFamily: 'monospace', fontSize: '10px', letterSpacing: '0.2em', fontWeight: 'bold', zIndex: 10, display: 'flex', flexDirection: 'column', gap: '4px', backgroundColor: 'rgba(0,0,0,0.6)', padding: '8px', border: '1px solid #333' }}>
         <span>[INPUT_LAYER]</span>
         <span style={{ color: '#ff0055', letterSpacing: 'normal' }}>STRUCTURAL NOISE DETECTED</span>
