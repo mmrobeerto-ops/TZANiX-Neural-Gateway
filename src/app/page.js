@@ -272,7 +272,7 @@ export default function FinOpsDashboard() {
 
         {/* CENTER COLUMN: HOLOGRAM + TERMINAL */}
         <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#000' }}>
-          <div style={{ flex: 1, padding: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
             <PurificationHologram />
           </div>
           
