@@ -85,9 +85,9 @@ const PurificationHologram = () => {
           } else if (c === laserCol) {
              y = 0; 
           } else {
-             // Derecha (Purificado)
+             // Derecha (Purificado) - Flujo laminar vivo y dinámico (Ondas armónicas perfectas)
              const dataPoint = c - time;
-             y = Math.sin(dataPoint * 0.08) * 3; // Flujo laminar perfecto
+             y = Math.sin(dataPoint * 0.25 + r * 0.15) * 12 + Math.cos(dataPoint * 0.1) * 6; 
           }
 
           const x_3d = (c - cols / 2) * spacingX;
@@ -132,8 +132,11 @@ const PurificationHologram = () => {
           let lineWidth = 1;
 
           if (c >= laserCol) {
-            color = `rgba(0, 240, 255, ${0.3 + (c - laserCol)*0.01})`;
-            lineWidth = 1.5;
+            // Brillo pulsante armónico
+            const dataPoint = c - time;
+            const pulse = Math.sin(dataPoint * 0.3) * 0.2;
+            color = `rgba(0, 240, 255, ${0.4 + pulse + (c - laserCol)*0.005})`;
+            lineWidth = 1.8;
           } else if (p1.isNoise || p2.isNoise || p3.isNoise) {
             color = p1.isSevereNoise ? 'rgba(255, 0, 85, 0.9)' : 'rgba(255, 0, 85, 0.5)';
             lineWidth = p1.isSevereNoise ? 2.5 : 1.5;
