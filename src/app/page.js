@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import PurificationHologram from "../../components/PurificationHologram";
+import PurificationHologram from "../components/PurificationHologram";
 
 const i18n = {
   en: {
