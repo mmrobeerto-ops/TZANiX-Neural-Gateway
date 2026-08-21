@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -8,80 +8,80 @@ const i18n = {
   en: {
     title_main: "TZANIX",
     title_sub: "NEURAL GATEWAY",
-    badge: "NEURAL PURIFICATION GRID",
+    badge: "L7 SECURITY SHIELD",
     btn_return: "[ RETURN TO ORCHESTRATOR ]",
     section_opt: "MODEL OPTIMIZATION",
     live: "[LIVE]",
-    trash_tokens: "TRASH TOKENS MITIGATED",
-    gpu_cluster: "GPU CLUSTER (NVIDIA H100)",
+    trash_tokens: "MALICIOUS PAYLOADS DROPPED (L7)",
+    gpu_cluster: "BACKEND CPU LOAD",
     raw_ingestion: "RAW INGESTION:",
     tzanix_filtered: "TZANIX FILTERED:",
     proj_savings: "PROJECTED CLOUD SAVINGS",
-    section_pruning: "NEURAL PRUNING (RUST CORE)",
-    pruning_desc: "The MAD filter rejects useless vectors before GPU allocation, slashing dead cycles.",
-    clean: "> CLEAN: ",
-    poison_rej: "> POISON REJECTED: ",
-    err_margin: "> ERROR MARGIN: ",
-    net_latency: "> NET LATENCY: ",
+    section_pruning: "RUST INERTIAL ENGINE",
+    pruning_desc: "The native Rust engine filters traffic in memory before reaching application servers, slashing dead cycles.",
+    clean: "> CLEAN REQUESTS: ",
+    poison_rej: "> HIGH-ENTROPY BLOCKED: ",
+    err_margin: "> FALSE POSITIVE MARGIN: ",
+    net_latency: "> LATENCY: ",
     terminal_title: "TZANIX INTEGRITY TERMINAL",
     sys_op: "SYS_OP: ROOT",
     awaiting: "Awaiting execution sequence...",
-    btn_execute: "[ EXECUTE INTEGRITY TEST (1M VECTORS) ]",
-    btn_auditing: "[ AUDITING HYPERSPACE... ]",
-    section_eco: "THERMAL & ESG IMPACT",
-    eco: "[ECO]",
-    co2: "CO2 MITIGATION (GRAMS)",
-    thermal_raw: "THERMAL LOAD (RAW DATA CENTER)",
-    excess_heat: "EXCESSIVE TFLOPS HEAT",
-    with_tzanix: "WITH TZANIX AI",
-    heat_dissip: "-42.00% HEAT DISSIPATION",
-    heat_dissip_done: "-99.48% HEAT DISSIPATION",
-    eco_desc: "By preventing the neural network from processing useless vectors, the native engine directly mitigates massive thermal waste from GPUs.",
-    log_1: "[SYS_CORE] INITIALIZING TZANIX INTEGRITY TEST...",
-    log_2: "> ALLOCATING SYNTHETIC HYPERSPACE (1,000,000 PURE VECTORS)...",
-    log_3: "> INJECTING MALICIOUS OUTLIERS (50,000 TARGET VECTORS)...",
-    log_4: "> ROUTING TO TZANIX TENSOR-ZERO RUST KERNEL...",
-    log_5: "✅ CORE AUDIT COMPLETE. LATENCY: 3.14ms.",
-    log_5_sim: "✅ CORE AUDIT COMPLETE (SIMULATED). LATENCY: 3.14ms."
+    btn_execute: "[ INITIATE L7 STRESS TEST (1M REQUESTS) ]",
+    btn_auditing: "[ STRESS TESTING NETWORK... ]",
+    section_eco: "SHADOW MODE / ZERO-TRUST",
+    eco: "[ACTIVE]",
+    co2: "FALSE POSITIVES PREVENTED",
+    thermal_raw: "BYPASS & WHITELISTS",
+    excess_heat: "JWT BYPASS: ACTIVE",
+    with_tzanix: "IP WHITELIST",
+    heat_dissip: "14 ACTIVE RULES",
+    heat_dissip_done: "14 ACTIVE RULES",
+    eco_desc: "Zero-Trust gateway mode secures all endpoints at Layer 7, rejecting bad payloads at wire-speed.",
+    log_1: "[SYS_CORE] INITIALIZING L7 STRESS TEST...",
+    log_2: "> SIMULATING 1,000,000 LEGITIMATE REQUESTS...",
+    log_3: "> INJECTING 50,000 MALICIOUS NETWORK ATTACKS...",
+    log_4: "> ROUTING TO RUST INERTIAL ENGINE...",
+    log_5: "âœ… L7 SHIELD STABLE. LATENCY: 0.56ms.",
+    log_5_sim: "âœ… L7 SHIELD STABLE (SIMULATED). LATENCY: 0.56ms."
   },
   es: {
     title_main: "TZANIX",
     title_sub: "NEURAL GATEWAY",
-    badge: "RED DE PURIFICACIÓN NEURONAL",
+    badge: "ESCUDO DE SEGURIDAD L7",
     btn_return: "[ VOLVER AL ORQUESTADOR ]",
-    section_opt: "OPTIMIZACIÓN DEL MODELO",
+    section_opt: "OPTIMIZACIÃ“N DEL MODELO",
     live: "[EN VIVO]",
-    trash_tokens: "TOKENS BASURA MITIGADOS",
-    gpu_cluster: "CLÚSTER DE GPUS (NVIDIA H100)",
+    trash_tokens: "CARGAS INÃšTILES DESCARTADAS (L7)",
+    gpu_cluster: "CARGA DE CPU EN BACKEND",
     raw_ingestion: "INGESTA CRUDA:",
     tzanix_filtered: "FILTRADO TZANIX:",
     proj_savings: "AHORRO PROYECTADO EN NUBE",
-    section_pruning: "PODA NEURONAL (NÚCLEO RUST)",
-    pruning_desc: "El filtro MAD rechaza vectores inútiles antes de la asignación a GPU, cortando ciclos muertos.",
-    clean: "> LIMPIOS: ",
-    poison_rej: "> VENENO RECHAZADO: ",
-    err_margin: "> MARGEN ERROR: ",
-    net_latency: "> LATENCIA NETA: ",
+    section_pruning: "MOTOR INERCIAL EN RUST",
+    pruning_desc: "El motor nativo en Rust filtra el trÃ¡fico en memoria antes de llegar a los servidores de aplicaciÃ³n, eliminando ciclos muertos.",
+    clean: "> PETICIONES LIMPIAS: ",
+    poison_rej: "> ALTA ENTROPÃA BLOQUEADA: ",
+    err_margin: "> MARGEN FALSOS POSITIVOS: ",
+    net_latency: "> LATENCIA: ",
     terminal_title: "TERMINAL DE INTEGRIDAD TZANIX",
     sys_op: "SYS_OP: ROOT",
-    awaiting: "Esperando secuencia de ejecución...",
-    btn_execute: "[ EJECUTAR TEST DE INTEGRIDAD (1M VECTORES) ]",
-    btn_auditing: "[ AUDITANDO HIPERESPACIO... ]",
-    section_eco: "IMPACTO TÉRMICO Y ESG",
-    eco: "[ECO]",
-    co2: "MITIGACIÓN DE CO2 (GRAMOS)",
-    thermal_raw: "CARGA TÉRMICA (DATA CENTER CRUDO)",
-    excess_heat: "CALOR TFLOPS EXCESIVO",
-    with_tzanix: "CON IA TZANIX",
-    heat_dissip: "-42.00% DISIPACIÓN DE CALOR",
-    heat_dissip_done: "-99.48% DISIPACIÓN DE CALOR",
-    eco_desc: "Al evitar que la red neuronal procese vectores inútiles, el motor nativo mitiga directamente el desperdicio térmico masivo de las GPUs.",
-    log_1: "[SYS_CORE] INICIALIZANDO TEST DE INTEGRIDAD TZANIX...",
-    log_2: "> ASIGNANDO HIPERESPACIO SINTÉTICO (1,000,000 VECTORES PUROS)...",
-    log_3: "> INYECTANDO ANOMALÍAS MALICIOSAS (50,000 VECTORES OBJETIVO)...",
-    log_4: "> ENRUTANDO AL NÚCLEO RUST TZANIX TENSOR-ZERO...",
-    log_5: "✅ AUDITORÍA DE NÚCLEO COMPLETA. LATENCIA: 3.14ms.",
-    log_5_sim: "✅ AUDITORÍA DE NÚCLEO COMPLETA (SIMULADA). LATENCIA: 3.14ms."
+    awaiting: "Esperando secuencia de ejecuciÃ³n...",
+    btn_execute: "[ INICIAR TEST DE ESTRÃ‰S L7 (1M PETICIONES) ]",
+    btn_auditing: "[ PROBANDO ESTRÃ‰S DE RED... ]",
+    section_eco: "MODO ESPEJO / ZERO-TRUST",
+    eco: "[ACTIVO]",
+    co2: "FALSOS POSITIVOS EVITADOS",
+    thermal_raw: "BYPASS Y LISTAS BLANCAS",
+    excess_heat: "JWT BYPASS: ACTIVO",
+    with_tzanix: "LISTA BLANCA IP",
+    heat_dissip: "14 REGLAS ACTIVAS",
+    heat_dissip_done: "14 REGLAS ACTIVAS",
+    eco_desc: "El modo gateway Zero-Trust asegura todos los endpoints en Capa 7, rechazando cargas maliciosas a velocidad de lÃ­nea.",
+    log_1: "[SYS_CORE] INICIALIZANDO TEST DE ESTRÃ‰S L7...",
+    log_2: "> SIMULANDO 1,000,000 PETICIONES LEGÃTIMAS...",
+    log_3: "> INYECTANDO 50,000 ATAQUES DE RED MALICIOSOS...",
+    log_4: "> ENRUTANDO AL MOTOR INERCIAL RUST...",
+    log_5: "âœ… ESCUDO L7 ESTABLE. LATENCIA: 0.56ms.",
+    log_5_sim: "âœ… ESCUDO L7 ESTABLE (SIMULADO). LATENCIA: 0.56ms."
   }
 };
 
@@ -164,7 +164,7 @@ export default function FinOpsDashboard() {
       setTestState('done');
 
     } catch (e) {
-      console.warn("Backend local no detectado, usando simulación UI");
+      console.warn("Backend local no detectado, usando simulaciÃ³n UI");
       await new Promise(r => setTimeout(r, 2000));
       setTestResults({
         clean_size: 1000000,
@@ -229,11 +229,11 @@ export default function FinOpsDashboard() {
               <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '10px' }}>{t.gpu_cluster}</div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #333', paddingBottom: '8px', marginBottom: '8px', fontSize: '0.8rem' }}>
                 <span style={{ color: '#64748b' }}>{t.raw_ingestion}</span>
-                <span style={{ color: '#fff' }}>64x GPUs</span>
+                <span style={{ color: '#fff' }}>92% CPU</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem' }}>
                 <span style={{ color: '#00f0ff' }}>{t.tzanix_filtered}</span>
-                <span style={{ color: '#fff' }}>{testState === 'done' ? '1x GPUs' : '38x GPUs'}</span>
+                <span style={{ color: '#fff' }}>{testState === 'done' ? '12% CPU' : '38% CPU'}</span>
               </div>
             </div>
 
@@ -264,7 +264,7 @@ export default function FinOpsDashboard() {
               </div>
               <div style={{ borderTop: '1px dashed #333', paddingTop: '8px', marginTop: '4px', display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: '#64748b' }}>{t.net_latency}</span>
-                <strong style={{ color: '#00f0ff' }}>{testState === 'done' ? '3.14ms' : '0.38ms'}</strong>
+                <strong style={{ color: '#00f0ff' }}>{testState === 'done' ? '0.56ms' : '0.12ms'}</strong>
               </div>
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function FinOpsDashboard() {
         {/* CENTER COLUMN: HOLOGRAM + TERMINAL */}
         <div style={{ display: 'flex', flexDirection: 'column', backgroundColor: '#000' }}>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <PurificationHologram />
+            <PurificationHologram testState={testState} />
           </div>
           
           <div style={{ height: '280px', borderTop: '1px solid #333', padding: '20px 30px', display: 'flex', flexDirection: 'column', backgroundColor: '#050505' }}>
@@ -284,11 +284,11 @@ export default function FinOpsDashboard() {
             <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8rem' }}>
               {terminalLogs.length === 0 && <span style={{ color: '#444' }}>{t.awaiting}</span>}
               {terminalLogs.map((log, i) => (
-                <span key={i} style={{ color: log.includes('✅') ? '#00f0ff' : (log.includes('INJECT') || log.includes('INYECT') || log.includes('MALICIOUS')) ? '#ff0055' : '#64748b' }}>
+                <span key={i} style={{ color: log.includes('âœ…') ? '#00f0ff' : (log.includes('INJECT') || log.includes('INYECT') || log.includes('MALICIOUS')) ? '#ff0055' : '#64748b' }}>
                   {log}
                 </span>
               ))}
-              {testState === 'testing' && <span style={{ color: '#64748b', animation: 'blink 1s infinite' }}>█</span>}
+              {testState === 'testing' && <span style={{ color: '#64748b', animation: 'blink 1s infinite' }}>â–ˆ</span>}
             </div>
             <button onClick={handleRunTest} disabled={testState === 'testing'} style={{ marginTop: '15px', background: testState === 'testing' ? '#111' : 'transparent', color: testState === 'testing' ? '#64748b' : '#64748b', border: '1px solid #333', padding: '12px', fontSize: '0.8rem', fontWeight: 'bold', letterSpacing: '2px', cursor: testState === 'testing' ? 'not-allowed' : 'pointer', transition: 'all 0.2s', textTransform: 'uppercase' }}>
               {testState === 'testing' ? t.btn_auditing : t.btn_execute}
@@ -303,8 +303,8 @@ export default function FinOpsDashboard() {
           </h2>
           <div style={{ marginBottom: '30px' }}>
             <div style={{ color: '#64748b', fontSize: '0.7rem', letterSpacing: '1px', marginBottom: '5px' }}>{t.co2}</div>
-            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#fff', letterSpacing: '-1px' }}>
-              {co2Saved.toLocaleString('en-US', {maximumFractionDigits: 0})}
+            <div style={{ fontSize: '3rem', fontWeight: 'bold', color: '#00f0ff', letterSpacing: '-1px' }}>
+              0.00%
             </div>
           </div>
           
@@ -328,8 +328,38 @@ export default function FinOpsDashboard() {
       </main>
       
       <style dangerouslySetInnerHTML={{__html: `
-        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+                @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0; } 100% { opacity: 1; } }
+        
+        /* Responsive Layout Updates */
+        .dashboard-main-grid {
+          display: grid;
+          grid-template-columns: 300px 1fr 300px;
+        }
+        .dashboard-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 15px 30px;
+        }
+        
+        @media (max-width: 1024px) {
+          .dashboard-main-grid {
+            grid-template-columns: 1fr;
+            overflow-y: auto;
+          }
+          .dashboard-main-grid > div {
+            border-left: none !important;
+            border-right: none !important;
+            border-bottom: 1px solid #333;
+          }
+          .dashboard-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: flex-start;
+          }
+        }
       `}} />
     </div>
   );
 }
+
